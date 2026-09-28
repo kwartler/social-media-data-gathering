@@ -3,7 +3,7 @@
 A local app for collecting social media text for NLP research methods. It builds on
 [yt-timed-text](https://github.com/kwartler/yt-timed-text) and adds TikTok, Instagram,
 Facebook, Reddit, Bluesky, Truth Social, and roughly 1,700 other video sites (Rumble, BitChute,
-Odysee, Dailymotion, Twitch, Bilibili, and more), plus an OpenRouter model step that turns video and images
+Odysee, Dailymotion, Twitch clips, Bilibili, and more), plus an OpenRouter model step that turns video and images
 into text you can analyze.
 
 Each platform has its own tab. Paste post links (or list an account, or run a keyword
@@ -52,8 +52,8 @@ after extraction unless you ask to keep it.
 | Bluesky | Yes | Profiles | Yes | Yes | App password for search only |
 | Reddit | Yes | Subreddits, users | Yes | Yes | Free Reddit API key |
 | Truth Social (see warning below) | Yes | Accounts | No | No | Nothing |
-| Other video sites (Other tab) | Yes | Channels and playlists, where the site allows | No | No | Nothing |
-| X/Twitter, Snapchat, Threads, LinkedIn | Not supported | | | | |
+| Other video sites (Other tab) | Yes | No | No | No | Nothing |
+| X/Twitter, Snapchat, Threads, LinkedIn, Vimeo, Kick | Not supported | | | | |
 
 The **OpenRouter key** is needed only for model steps: video and image to text, and
 translation. YouTube with its default caption source never needs it.
@@ -72,13 +72,15 @@ Notes:
   collecting data you plan to publish or share. The tab shows this warning at the top.
   Replies and search need a login and are not supported. Truth Social rate-limits hard, so
   the app paces requests; if you see a 429 error, wait 15 to 30 minutes.
-- **Other tab.** Pick a popular site (Rumble, BitChute, Odysee, Dailymotion, Twitch,
+- **Other tab.** Pick a popular site (Rumble, BitChute, Odysee, Dailymotion, Twitch clips,
   Bilibili) for example links, or choose "Any other supported site" and paste links from
   any site on yt-dlp's [full list of supported sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
-  Every document records its website in the `site` field (for example `rumble.com`).
-  Live streams can be collected only after they end. Copy-protected (DRM) videos, which
-  now includes most of Vimeo, give you the title and description but can't go to the model.
-  Rumble channel listing is currently broken in yt-dlp; paste Rumble video links instead.
+  The popular sites are tested; others are best effort. Paste links to individual videos
+  (channel listing is not offered here). Every document records its website in the `site`
+  field (for example `rumble.com`). Live streams can be collected only after they end.
+  Vimeo (copy-protected) and Kick (live streams) are not supported.
+- **Large videos are shrunk automatically.** Anything over 40 MB is re-encoded to 360p
+  before it goes to the model, which can take a minute for long videos.
 - **Instagram rate-limits logged-out access.** Large batches may start failing with a login
   message; wait 15 minutes and re-run the failed links.
 
@@ -160,7 +162,7 @@ Truth Social, Other**, or
 
 - **Links:** paste post links, one per line. The app confirms what it recognized and flags
   links that belong on another tab or aren't supported.
-- **Account** (YouTube, TikTok, Reddit, Bluesky, Truth Social, Other): paste a channel, profile, subreddit
+- **Account** (YouTube, TikTok, Reddit, Bluesky, Truth Social): paste a channel, profile, subreddit
   (`r/name`), or user (`u/name`), choose how many recent posts, and uncheck any you don't want.
 - **Search** (YouTube, Reddit, Bluesky): keyword or hashtag search.
 - **YouTube caption language:** with one video pasted, the menu lists that video's actual

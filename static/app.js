@@ -77,11 +77,12 @@ const PLATFORMS = {
   other: {
     label: "Other",
     note: "Any other video site the yt-dlp downloader supports (about 1,700). Pick a popular site for examples, or choose "
-      + "\"Any other supported site\" and paste links from anywhere on the full list. Works like TikTok: the title and "
-      + "description come from the site, and the model transcribes and describes the video. Live streams can only be collected after they end.",
+      + "\"Any other supported site\" and paste links from anywhere on the full list (sites beyond the popular ones are best effort). "
+      + "Works like TikTok: the title and description come from the site, and the model transcribes and describes the video. "
+      + "Paste links to individual videos; live streams cannot be collected until they end.",
     linksLabel: "Video links, one per line",
     placeholder: "",
-    account: { label: "Channel or playlist", placeholder: "", prefix: "other:", alwaysPrefix: true, note: "Lists a channel's or playlist's recent videos, where the site supports it." },
+    account: null,
     search: null,
     comments: false, captions: true, model: true,
   },
@@ -89,13 +90,13 @@ const PLATFORMS = {
 
 // Popular sites for the Other tab. "any" accepts every site yt-dlp supports.
 const OTHER_SITES = [
-  { key: "rumble", label: "Rumble", post: "https://rumble.com/v6abc12-video-title.html", channel: "https://rumble.com/c/ChannelName" },
-  { key: "bitchute", label: "BitChute", post: "https://www.bitchute.com/video/AbCdEf123/", channel: "https://www.bitchute.com/channel/name/" },
-  { key: "odysee", label: "Odysee", post: "https://odysee.com/@channel:1/video-name:2", channel: "https://odysee.com/@channel:1" },
-  { key: "dailymotion", label: "Dailymotion", post: "https://www.dailymotion.com/video/x8abc12", channel: "https://www.dailymotion.com/username" },
-  { key: "twitch", label: "Twitch (clips and past broadcasts)", post: "https://www.twitch.tv/videos/1234567890", channel: "https://www.twitch.tv/name/videos" },
-  { key: "bilibili", label: "Bilibili", post: "https://www.bilibili.com/video/BV1ab4y1c7de", channel: "https://space.bilibili.com/12345" },
-  { key: "any", label: "Any other supported site", post: "Paste any video link from a site on the full list", channel: "A channel or playlist link from a supported site" },
+  { key: "rumble", label: "Rumble", post: "https://rumble.com/v6abc12-video-title.html" },
+  { key: "bitchute", label: "BitChute", post: "https://www.bitchute.com/video/AbCdEf123/" },
+  { key: "odysee", label: "Odysee", post: "https://odysee.com/@channel:1/video-name:2" },
+  { key: "dailymotion", label: "Dailymotion", post: "https://www.dailymotion.com/video/x8abc12" },
+  { key: "twitch", label: "Twitch clips", post: "https://clips.twitch.tv/ClipName or https://www.twitch.tv/name/clip/ClipName" },
+  { key: "bilibili", label: "Bilibili", post: "https://www.bilibili.com/video/BV1ab4y1c7de" },
+  { key: "any", label: "Any other supported site", post: "Paste any video link from a site on the full list" },
 ];
 
 // Per-tab state, so switching tabs keeps what you typed and listed
@@ -291,7 +292,6 @@ function buildSites() {
 function applySite() {
   const site = OTHER_SITES.find(x => x.key === $("#siteSelect").value) || OTHER_SITES[0];
   $("#links").placeholder = site.post;
-  $("#acctInput").placeholder = site.channel;
 }
 
 // -------- Links: validate against the active platform --------
@@ -437,7 +437,6 @@ function accountInput(raw) {
   // Bare handles like "@name" or "r/sub" get the platform prefix the backend expects
   raw = raw.trim();
   const p = PLATFORMS[active].account;
-  if (p.alwaysPrefix) return p.prefix + raw;
   return /^https?:\/\/|\.(com|app)\//i.test(raw) ? raw : p.prefix + raw;
 }
 

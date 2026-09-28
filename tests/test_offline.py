@@ -38,7 +38,6 @@ SCHEMA = json.loads((Path(__file__).parent.parent / "smdg" / "document.schema.js
     ("https://www.bitchute.com/video/UGlrF9o9b-Q/", "other", "post"),
     ("https://www.dailymotion.com/video/x5kesuj", "other", "post"),
     ("https://odysee.com/@Odysee:8/first-day-in-lbry:e", "other", "post"),
-    ("other:https://rumble.com/c/Rumble", "other", "account"),
 ])
 def test_classify(url, platform, kind):
     t = classify.classify(url)
@@ -57,8 +56,11 @@ def test_classify_rejects(url):
         classify.classify(url)
 
 
-def test_vimeo_pages_use_the_player_url():
-    assert classify.classify("https://vimeo.com/76979871")["url"] == "https://player.vimeo.com/video/76979871"
+def test_removed_sites_explain_why():
+    for url, word in (("https://vimeo.com/76979871", "copy-protected"), ("https://player.vimeo.com/video/76979871", "copy-protected"),
+                      ("https://kick.com/xqc", "live")):
+        with pytest.raises(ValueError, match=word):
+            classify.classify(url)
 
 
 def test_truthsocial_html_to_text():

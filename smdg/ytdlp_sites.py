@@ -69,7 +69,7 @@ def collect(target: dict, opts: dict) -> dict:
         if info.get("is_live") or info.get("live_status") in ("is_live", "is_upcoming"):
             raise ValueError("This is a live or upcoming stream. Collect it after the broadcast ends and is saved.")
         if platform == "other" and info.get("_type") == "playlist" and len(info.get("entries") or []) > 1:
-            raise ValueError("This link is a channel or playlist, not a single video. Use the Channel box to list its videos.")
+            raise ValueError("This link is a channel or playlist, not a single video. Paste links to individual videos.")
 
         entries = info.get("entries") if info.get("_type") == "playlist" else None
         main = info
@@ -156,6 +156,29 @@ def collect(target: dict, opts: dict) -> dict:
     return {"rows": rows, "segments": segments, "raw": raw, "timedtext": timedtext, "fetch_media": fetch_media}
 
 
+SHRINK_ABOVE = 40 * 1024 * 1024
+
+
+def shrink_video(path: Path) -> Path:
+    """Re-encode a large video to 360p so it fits the model's upload limit. Returns the new path."""
+    import subprocess
+    if path.stat().st_size <= SHRINK_ABOVE:
+        return path
+    ff = _ffmpeg()
+    if not ff:
+        return path
+    out = path.with_name(path.stem + "_360p.mp4")
+    cmd = [ff, "-y", "-loglevel", "error", "-i", str(path),
+           "-vf", "scale=-2:360", "-c:v", "libx264", "-preset", "veryfast", "-crf", "30",
+           "-c:a", "aac", "-b:a", "64k", "-ac", "1", str(out)]
+    try:
+        subprocess.run(cmd, check=True, timeout=1800)
+    except Exception:
+        return path
+    path.unlink(missing_ok=True)
+    return out
+
+
 def _impersonate() -> dict:
     """Browser impersonation for sites behind bot protection (Rumble). Empty if unavailable."""
     try:
@@ -214,7 +237,9 @@ def download_media(url: str, info: dict, entries, post_id: str, platform: str) -
         opts = _opts(
             **(_impersonate() if platform == "other" else {}),
             skip_download=False,
-            format="b[height<=?480][vcodec!=?none][acodec!=?none]/bv*[height<=?480]+ba/b[height<=?720]/bv*+ba/b",
+            # Smallest copy near 360p: plenty for the model, and keeps files under the upload limit
+            format="bv*+ba/b",
+            format_sort=["res:360", "+size", "+br"],
             merge_output_format="mp4",
             outtmpl=str(out_dir / "%(id)s.%(ext)s"),
             noplaylist=False,
@@ -249,12 +274,9 @@ def list_account(target: dict, limit: int) -> Iterator[dict]:
     url = target["url"]
     if target["platform"] == "youtube" and not url.rstrip("/").endswith(("/videos", "/shorts")):
         url = url.rstrip("/") + "/videos"
-    opts = _opts(extract_flat="in_playlist", playlistend=limit,
-                 **(_impersonate() if target["platform"] == "other" else {}))
+    opts = _opts(extract_flat="in_playlist", playlistend=limit)
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
-    if target["platform"] == "other" and info.get("_type") != "playlist":
-        raise ValueError("This link is a single video, not a channel or playlist. Paste it in the links box instead.")
     for e in (info.get("entries") or [])[:limit]:
         if e:
             yield _list_item(target["platform"], e)

@@ -17,6 +17,8 @@ UNSUPPORTED = {
     "threads.net": "Threads is not supported yet.",
     "threads.com": "Threads is not supported yet.",
     "linkedin.com": "LinkedIn is not supported: its terms prohibit automated collection.",
+    "vimeo.com": "Vimeo is not supported: its videos are copy-protected (DRM), so they cannot be sent to the model.",
+    "kick.com": "Kick is not supported: its links lead to live streams, which cannot be collected.",
 }
 
 
@@ -31,15 +33,6 @@ def classify(raw: str) -> dict:
         raise ValueError("Empty input.")
 
     # Shorthand handles: tiktok:@name, reddit:r/sub, reddit:u/name, bsky:name.bsky.social
-    m = re.match(r"^other:\s*(.+)$", s, re.I)
-    if m:
-        ref = m.group(1).strip()
-        if not re.match(r"^https?://", ref, re.I):
-            ref = "https://" + ref
-        if not ytdlp_site(ref):
-            raise ValueError("yt-dlp does not support this site or link. See the full list of supported sites.")
-        return {"platform": "other", "kind": "account", "url": ref}
-
     m = re.match(r"^(tiktok|reddit|bsky|bluesky|youtube|yt|truth|truthsocial):\s*(.+)$", s, re.I)
     if m:
         plat, ref = m.group(1).lower(), m.group(2).strip()
@@ -141,9 +134,7 @@ def classify(raw: str) -> dict:
             return {"platform": "bluesky", "kind": "account", "actor": parts[1]}
         raise ValueError("Unrecognized Bluesky URL. Paste a post link or a profile link.")
 
-    # Any other site yt-dlp supports (Rumble, BitChute, Odysee, Dailymotion, Vimeo, ...)
-    if host in ("vimeo.com",) and parts and parts[-1].isdigit():
-        s = f"https://player.vimeo.com/video/{parts[-1]}"  # vimeo.com pages need a login; the player does not
+    # Any other site yt-dlp supports (Rumble, BitChute, Odysee, Dailymotion, Bilibili, ...)
     site = ytdlp_site(s)
     if site:
         return {"platform": "other", "kind": "post", "url": s, "site": site}

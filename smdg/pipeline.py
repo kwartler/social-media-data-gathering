@@ -52,7 +52,7 @@ def list_account(raw: str, limit: int, sort: str = "new") -> Iterator[dict]:
     t = classify.classify(raw)
     if t["kind"] != "account":
         raise ValueError("That is a single post, not an account. Use Collect instead.")
-    if t["platform"] in ("youtube", "tiktok", "other"):
+    if t["platform"] in ("youtube", "tiktok"):
         yield from ytdlp_sites.list_account(t, limit)
     elif t["platform"] == "bluesky":
         yield from bluesky.list_account(t, limit)
@@ -92,6 +92,8 @@ def _apply_llm(result: dict, opts: dict) -> dict:
             return {}
         kind, files = got
         media_dir = files[0].parent if files else None
+        if kind == "video":
+            files = [ytdlp_sites.shrink_video(f) for f in files]
         out = llm.extract(files, kind, model)
     except Exception as e:
         post["llm_error"] = errors.friendly(e) if not isinstance(e, llm.LLMError) else str(e)
