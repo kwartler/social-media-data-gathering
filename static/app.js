@@ -14,7 +14,7 @@ const PLATFORMS = {
     placeholder: "https://www.youtube.com/watch?v=...\nhttps://youtu.be/...\nhttps://www.youtube.com/shorts/...",
     account: { label: "Channel", placeholder: "https://www.youtube.com/@channel", prefix: "youtube:", note: "Lists the channel's most recent uploads." },
     search: { note: "YouTube keyword search. No key needed." },
-    comments: true, captions: true, model: false,
+    comments: true, captions: true, model: false, pseudonymize: "commenters",
   },
   tiktok: {
     label: "TikTok",
@@ -63,7 +63,10 @@ const PLATFORMS = {
 
 // Per-tab state, so switching tabs keeps what you typed and listed
 const state = {};
-for (const p of Object.keys(PLATFORMS)) state[p] = { links: "", listRows: [], acct: "", query: "", lang: "en", valid: [] };
+// Default pseudonymization: keep the channel you study on YouTube; elsewhere post authors are often private people
+for (const [p, cfg] of Object.entries(PLATFORMS)) {
+  state[p] = { links: "", listRows: [], acct: "", query: "", lang: "en", valid: [], pseudo: cfg.pseudonymize || "everyone" };
+}
 let active = "youtube";
 let settings = {};
 
@@ -146,6 +149,7 @@ function saveTabState() {
   s.acct = $("#acctInput").value;
   s.query = $("#searchQuery").value;
   s.lang = $("#optLang").value || s.lang;
+  s.pseudo = $("#optPseudo").value;
 }
 
 function switchTab(tab) {
@@ -164,6 +168,7 @@ function switchTab(tab) {
   $("#linksLabel").textContent = p.linksLabel;
   $("#links").placeholder = p.placeholder;
   $("#links").value = s.links;
+  $("#optPseudo").value = s.pseudo;
 
   show($("#accountBlock"), !!p.account);
   if (p.account) {
@@ -420,7 +425,7 @@ function options() {
     comments: p.comments ? (+$("#optComments").value || 0) : 0,
     max_media_seconds: +$("#optMaxSecs").value || 300,
     caption_lang: $("#optLang").value || "en",
-    pseudonymize: $("#optPseudo").checked,
+    pseudonymize: $("#optPseudo").value,
     include_identifiable: $("#optIdent").checked,
     keep_media: usesModel() && $("#optKeep").checked,
     model: settings.model,

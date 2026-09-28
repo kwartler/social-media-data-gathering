@@ -63,10 +63,35 @@ def test_parse_json3():
 def test_pseudonymize_is_stable_and_masks_mentions():
     a = new_row("bluesky", "post", "1", author="alice.bsky.social", author_id="did:plc:a", url="https://x", text="hi @bob.bsky.social")
     b = new_row("bluesky", "comment", "1", comment_id="2", author="alice.bsky.social", author_id="did:plc:a", text="again")
-    rows, key = pseudonymize([a, b])
+    rows, key, names = pseudonymize([a, b])
     assert rows[0]["author"] == rows[1]["author"] != "alice.bsky.social"
     assert rows[0]["url"] == "" and "bob" not in rows[0]["text"]
     assert key[0]["url"] == "https://x"
+    assert {n["original"] for n in names} == {"alice.bsky.social", "@bob.bsky.social"}
+
+
+def test_mention_and_author_share_a_pseudonym():
+    post = new_row("bluesky", "post", "1", author="bob.bsky.social", author_id="did:plc:b", text="hi")
+    com = new_row("bluesky", "comment", "1", comment_id="2", author="carol.bsky.social", author_id="did:plc:c", text="@bob.bsky.social agreed")
+    rows, _, _ = pseudonymize([post, com])
+    assert rows[1]["text"] == f"@{rows[0]['author']} agreed"
+
+
+def test_commenters_mode_keeps_the_studied_channel():
+    post = new_row("youtube", "post", "v1", author="Channel 5 News", author_id="@Channel5News", url="https://yt/v1", text="Report")
+    com = new_row("youtube", "comment", "v1", comment_id="c1", author="@viewer1", author_id="UCviewer", url="https://yt/v1",
+                  text="@Channel5News thanks, and @viewer2 look")
+    rows, key, names = pseudonymize([post, com], "commenters")
+    assert rows[0]["author"] == "Channel 5 News" and rows[0]["url"] == "https://yt/v1"
+    assert rows[1]["author"].startswith("u_") and rows[1]["url"] == ""
+    assert "@Channel5News" in rows[1]["text"] and "viewer2" not in rows[1]["text"]
+    assert key[0]["pseudonym"] == "" and key[1]["author"] == "@viewer1"
+
+
+def test_none_mode_changes_nothing():
+    r = new_row("reddit", "post", "1", author="someone", text="hi @other")
+    rows, key, names = pseudonymize([r], "none")
+    assert rows[0]["author"] == "someone" and rows[0]["text"] == "hi @other" and key == names == []
 
 
 def test_documents_match_schema_for_every_platform():

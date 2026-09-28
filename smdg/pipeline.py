@@ -35,7 +35,7 @@ DEFAULT_OPTS = {
     "llm": True,
     "model": config.DEFAULT_MODEL,
     "max_media_seconds": 300,
-    "pseudonymize": True,
+    "pseudonymize": "everyone",  # everyone, commenters, or none
     "include_identifiable": True,
     "keep_media": False,
     "youtube_source": "captions",  # captions (timedtext), model, or both
@@ -283,9 +283,9 @@ def _csv(rows: list[dict], cols: list[str]) -> str:
 
 
 def export(job_id: str, rows, segments, raws, timedtext, manifest, opts) -> Path:
-    key = []
-    if opts.get("pseudonymize"):
-        rows, key = pseudonymize(rows)
+    mode = opts.get("pseudonymize")
+    mode = {True: "everyone", False: "none", None: "none"}.get(mode, mode)
+    rows, key, names = pseudonymize(rows, mode)
     by_doc: dict[str, list] = {}
     for sg in segments:
         by_doc.setdefault(sg["doc_id"], []).append(sg)
@@ -304,6 +304,7 @@ def export(job_id: str, rows, segments, raws, timedtext, manifest, opts) -> Path
         if opts.get("include_identifiable"):
             if key:
                 z.writestr("identifiable/linking_key.csv", _csv(key, ["doc_id", "pseudonym", "author", "author_id", "url"]))
+                z.writestr("identifiable/pseudonym_key.csv", _csv(names, ["pseudonym", "platform", "kind", "original"]))
             for doc_id, raw in raws.items():
                 z.writestr(f"identifiable/raw/{doc_id}.json", json.dumps(raw, ensure_ascii=False, default=str))
     return zip_path

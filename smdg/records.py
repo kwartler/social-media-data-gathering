@@ -126,29 +126,76 @@ def pseudonym(platform: str, ident: str) -> str:
     return f"u_{h[:10]}"
 
 
-def pseudonymize(rows: list[dict]) -> list[dict]:
-    """Return (rows with people replaced by stable pseudonyms, linking key rows).
+PSEUDONYM_MODES = ("everyone", "commenters", "none")
+
+
+def _handle(r: dict) -> str:
+    """The account's handle (what @mentions use), so mentions and authors get the same pseudonym."""
+    for v in (r.get("author_id") or "", r.get("author") or ""):
+        if v.startswith("@"):
+            return v[1:].lower()
+    return (r.get("author") or r.get("author_id") or "").lstrip("@").lower()
+
+
+def pseudonymize(rows: list[dict], mode: str = "everyone") -> tuple[list[dict], list[dict], list[dict]]:
+    """Replace people with stable pseudonyms. Returns (rows, linking_key, pseudonym_key).
+
+    mode "everyone": every author and @mention.
+    mode "commenters": keep the authors of the posts collected (the accounts being
+        studied, such as a news channel); pseudonymize commenters and @mentions of anyone else.
+    mode "none": leave everything as collected.
 
     The same account always gets the same pseudonym on this computer, so reply
-    networks and author-level analysis still work.
+    networks and author-level analysis still work. linking_key maps each document
+    back to its real author and URL; pseudonym_key maps every pseudonym (authors
+    and @mentions) back to the original name.
     """
-    key = []
-    out = []
+    if mode not in PSEUDONYM_MODES:
+        raise ValueError(f"Unknown pseudonymize mode: {mode}")
+    if mode == "none":
+        return [dict(r) for r in rows], [], []
+
+    kept = set()
+    if mode == "commenters":
+        for r in rows:
+            if r["doc_type"] == "post":
+                kept.add((r["platform"], _handle(r)))
+                kept.add((r["platform"], (r.get("author_id") or "").lower()))
+
+    names: dict[str, dict] = {}
+
+    def code(plat: str, handle: str, original: str, kind: str) -> str:
+        p = pseudonym(plat, handle)
+        names.setdefault(p, {"pseudonym": p, "platform": plat, "original": original, "kind": kind})
+        return p
+
+    linking, out = [], []
     for r in rows:
         r = dict(r)
         plat = r["platform"]
-        key.append({
+        h = _handle(r)
+        is_kept = (plat, h) in kept or (plat, (r.get("author_id") or "").lower()) in kept
+        linking.append({
             "doc_id": r["doc_id"],
-            "url": r["url"],
+            "pseudonym": "" if is_kept or not h else pseudonym(plat, h),
             "author": r["author"],
             "author_id": r["author_id"],
-            "pseudonym": pseudonym(plat, r["author_id"] or r["author"]),
+            "url": r["url"],
         })
-        r["author"] = pseudonym(plat, r["author_id"] or r["author"])
-        r["author_id"] = r["author"]
-        r["url"] = ""
+        if not is_kept and h:
+            p = code(plat, h, r["author"] or r["author_id"], "author")
+            r["author"] = p
+            r["author_id"] = p
+            r["url"] = ""
+
+        def sub(m, plat=plat):
+            handle = m.group(1).lower()
+            if (plat, handle) in kept:
+                return m.group(0)
+            return "@" + code(plat, handle, "@" + m.group(1), "mention")
+
         for f in TEXT_FIELDS:
             if r.get(f):
-                r[f] = MENTION_RE.sub(lambda m: "@" + pseudonym(plat, m.group(1)), r[f])
+                r[f] = MENTION_RE.sub(sub, r[f])
         out.append(r)
-    return out, key
+    return out, linking, sorted(names.values(), key=lambda x: (x["kind"], x["pseudonym"]))

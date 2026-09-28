@@ -11,7 +11,7 @@ Produced by social-media-data-gathering. Read this before analysis.
 | `corpus.csv` + `segments.csv` | The same data flattened for spreadsheets: documents in one file, transcript segments in the other (join on `doc_id`). |
 | `timedtext/` | YouTube only: the raw caption files exactly as YouTube's timedtext API returned them (json3), as in yt-timed-text. |
 | `manifest.json` | Provenance: every input, its status and error, the options used, the exact model prompt and version, and the model cost. |
-| `identifiable/` | Present only if you chose to include it. `linking_key.csv` maps pseudonyms back to real accounts and URLs; `raw/` holds the full platform responses. **Store this folder separately from the analysis data and delete it when your protocol says to.** |
+| `identifiable/` | Included by default. `linking_key.csv` maps each document to its real author and URL; `pseudonym_key.csv` maps every code (authors and @mentions) to the original name; `raw/` holds the full platform responses. `examples/restore_identities.R` uses these to put names back. **Store this folder separately from the analysis data and delete it when your protocol says to.** |
 
 ## Fields (same for every platform)
 
@@ -22,8 +22,8 @@ Produced by social-media-data-gathering. Read this before analysis.
 | `doc_type` | `post` or `comment`. |
 | `post_id` | The platform id of the post this document belongs to. Comments share their post's `post_id`. |
 | `parent_id` | For comments, the `doc_id` of the post or comment being replied to. Use it to rebuild reply trees. |
-| `url` | Link to the document. Blank when pseudonymized (see the linking key). |
-| `author`, `author_id` | Account name and platform id. Replaced by a pseudonym such as `u_3f9a1c02de` when pseudonymized. The same account always gets the same pseudonym on the computer that collected it. |
+| `url` | Link to the document. Blank when the author was pseudonymized (see the linking key). |
+| `author`, `author_id` | Account name and platform id, or a pseudonym such as `u_3f9a1c02de`. With "commenters and @mentions only", the authors of the collected posts keep their real names. The same account always gets the same pseudonym on the computer that collected it, and @mentions of that account in text use the same code. |
 | `community` | Subreddit for Reddit; blank elsewhere. |
 | `created_at` | When the document was posted, ISO 8601 UTC. |
 | `title` | Title (YouTube and Reddit posts only). |

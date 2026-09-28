@@ -98,7 +98,12 @@
             <option value="Korean"><option value="Arabic"><option value="Hindi"><option value="Russian">
           </datalist>
           <label id="optCommentsWrap">Comments per post <input id="optComments" type="number" min="0" max="500" value="0"></label>
-          <label><input type="checkbox" id="optPseudo" checked> Pseudonymize authors and @mentions</label>
+          <label>Pseudonymize
+            <select id="optPseudo">
+              <option value="commenters">Commenters and @mentions only (keep post authors)</option>
+              <option value="everyone">Everyone, including post authors</option>
+              <option value="none">No one</option>
+            </select></label>
           <label><input type="checkbox" id="optIdent" checked> Include identifiable folder (linking key, raw data)</label>
           <label id="optKeepWrap"><input type="checkbox" id="optKeep"> Keep downloaded media files</label>
         </div>

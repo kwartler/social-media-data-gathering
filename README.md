@@ -162,8 +162,8 @@ Collection options:
 | Transcript source (YouTube) | captions | `captions` (timedtext, as in yt-timed-text), `model`, or `both`. |
 | Caption language | en | Which caption track to take (YouTube and TikTok). |
 | Translate to | off | Adds `translated_*` fields in this language for the title, text, transcripts, and on-screen text of every post and comment. Originals are never replaced. |
-| Pseudonymize | on | Replaces authors and @mentions with stable codes such as `u_3f9a1c02de`, and removes URLs from the corpus. |
-| Include identifiable folder | on | Adds the linking key (pseudonym to real account and URL) and raw platform data in a separate folder. |
+| Pseudonymize | YouTube: commenters only. Other tabs: everyone | Replaces names and @mentions with stable codes such as `u_3f9a1c02de`. **Commenters and @mentions only** keeps the accounts you chose to study (for example a news channel) and codes everyone else. **Everyone** codes post authors too. **No one** turns it off. |
+| Include identifiable folder | on | Adds the keys that map codes back to real names and links, plus raw platform data, in a separate `identifiable/` folder. |
 | Keep downloaded media | off | Leaves the downloaded videos and images on disk instead of deleting them. |
 
 ## What's in the zip
@@ -185,6 +185,21 @@ corpus <- jsonlite::stream_in(file("corpus.jsonl", encoding = "UTF-8"))
 ```
 
 In Python: `pandas.read_json("corpus.jsonl", lines=True)`.
+
+### R scripts for students
+
+All three run from RStudio with the **Source** button and a file-picker window; no
+programming needed.
+
+| Script | What it does |
+|---|---|
+| `examples/restore_identities.R` | Puts real names, @mentions, and links back into a pseudonymized export, using the key in `identifiable/`. Saves `corpus_identified.csv`. Keep the output private. |
+| `examples/review_sheet.R` | Picks a random sample of posts with model output and builds `review_sheet.csv` with blank columns for marking whether the transcript, speakers, on-screen text, description, and translation are right. `summarize_review()` then tallies the results for your methods section. |
+| `examples/starter_analysis.R` | Runs the three course methods on an export (below). |
+
+A typical cleanup: collect with pseudonymization on, run `restore_identities.R`, run
+`review_sheet.R` on its output, check the sample by hand, and analyze the pseudonymized
+`corpus.jsonl`.
 
 `examples/starter_analysis.R` loads an export and runs all three course methods: a
 document-term matrix with **tm**, dependency parsing with **udpipe**, and an **LLM-as-a-judge**
@@ -228,6 +243,8 @@ sample, especially with three or more speakers.
 ## Research ethics
 
 This tool makes collection easy; that does not make every collection appropriate.
+[`docs/ethics_speaker_notes.txt`](docs/ethics_speaker_notes.txt) has lecture notes with
+discussion prompts covering the points below.
 
 - Get IRB approval, or confirm an exemption, before collecting data for research you plan to
   publish or share.

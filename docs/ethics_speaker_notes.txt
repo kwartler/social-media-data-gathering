@@ -1,0 +1,154 @@
+SPEAKER NOTES: RESEARCH ETHICS FOR SOCIAL MEDIA TEXT DATA
+Learn NLP Research Methods Applied to Social Media
+Companion to the social-media-data-gathering app
+
+Use these notes alongside a live demo of the app. Each section is one talking
+point, roughly one slide, with a suggested prompt for discussion.
+
+
+1. PUBLIC IS NOT THE SAME AS FAIR GAME
+
+- A post being visible without a login does not mean its author agreed to be
+  studied, quoted, or fed to an AI model.
+- People post for an audience they imagine (friends, followers, a hashtag
+  community), not for a researcher's corpus. Moving their words into a new
+  context can harm them even when nothing was technically private.
+- The question to ask is not "can I collect this?" but "would a reasonable
+  person expect their post to be used this way, and could it hurt them?"
+
+Discussion: Is a TikTok with 200 views "public" in the same way as a news
+channel with 2 million subscribers?
+
+
+2. WHO ARE YOU STUDYING, AND WHO IS A BYSTANDER?
+
+- Studying a public organization or public figure in their public role (for
+  example, the YouTube channel Channel5News) is different from studying private
+  individuals.
+- The app reflects this with three Pseudonymize settings:
+    "Commenters and @mentions only": keep the names of the accounts you chose
+      to study; replace everyone else with codes. Default on the YouTube tab.
+    "Everyone": replace every name, including post authors. Default on TikTok,
+      Instagram, Facebook, Reddit, and Bluesky, where post authors are often
+      private individuals, and some may be minors.
+    "No one": keep all names. Use only when every person in the data is a
+      public account acting publicly, and your protocol allows it.
+- Commenters are almost always bystanders. They replied to a video; they did
+  not sign up to be research subjects.
+
+Discussion: You study a politician's YouTube channel. Are the people in the
+comments part of your study or bystanders? What changes if a commenter is
+quoted in your paper?
+
+
+3. PSEUDONYMIZED IS NOT ANONYMOUS
+
+- The app replaces names with codes such as u_3f9a1c02de, and replaces @mentions
+  inside the text too. The same person always gets the same code, so you can
+  still count posts per author or map who replies to whom.
+- But the content itself can identify people: a quote typed into a search
+  engine often finds the original post in seconds. A video description can
+  mention a name on a sign, a school logo, or a distinctive tattoo.
+- In publications, paraphrase rather than quote verbatim when a quote could
+  lead back to a private person, and never publish codes alongside quotes that
+  can be searched.
+
+Discussion: Take one sentence from your corpus and search it. Can you find the
+author?
+
+
+4. THE LINKING KEY: SEPARATE, PRIVATE, TEMPORARY
+
+- Every export puts the key that maps codes back to real names and links in a
+  separate folder, identifiable/. That folder is included by default because
+  you need it to check the model's work and to honor deletion requests.
+- Treat it like a key to a locked room:
+    Store it apart from the analysis files, with tighter access.
+    Share the analysis data (corpus.jsonl) with collaborators; never the key.
+    Delete it on the schedule your protocol sets.
+- restore_identities.R puts names back for a specific task, such as manual
+  review. The output file contains real names and must stay private too.
+
+Discussion: Where on your laptop is the key right now? Who else could open it?
+
+
+5. MODEL OUTPUT IS A MEASUREMENT, NOT THE TRUTH
+
+- Transcripts, speaker labels, on-screen text, visual descriptions, and
+  translations from the model are AI-generated and unverified. Every export
+  marks them with ai_generated = true.
+- Speaker labels in context: in a 2026 benchmark of long, multi-speaker
+  recordings in 22 Indian languages, a leading model misattributed about 33% of
+  words to the wrong speaker. That is a hard test, and dedicated commercial
+  transcription services scored 33 to 44% on it. Short social clips with one or
+  two speakers are likely easier, but nobody has measured that, so we check.
+- Model timestamps are approximate, and labels are per video: speaker "A" in one
+  video has nothing to do with speaker "A" in another.
+- Translations miss slang, sarcasm, and code-switching most often. Analyze
+  originals and translations separately, and say which one you used.
+- The practice: run review_sheet.R, hand-check a random sample (20 posts is a
+  reasonable start), and report the result, for example "transcripts were fully
+  correct for 17 of 20 sampled posts."
+
+Discussion: The platform's captions and the model's transcript disagree on the
+same video. Which one is "right," and how would you find out?
+
+
+6. REPRODUCIBILITY AND PROVENANCE
+
+- manifest.json records every link submitted, every failure and its reason, the
+  settings used, the exact model, the full prompt with its version number, and
+  the cost. Your methods section should report the model and prompt version.
+- The collection log records every attempt, including failures. Failed posts
+  are part of your sampling story: if private or deleted posts fail more often,
+  your sample is biased toward content that stayed public.
+- Engagement counts (likes, views) are a snapshot at collection time, and posts
+  can be edited or deleted later. Report when you collected.
+
+Discussion: You collected 500 posts and 60 failed. What do you write in your
+methods section?
+
+
+7. PLATFORM RULES AND THE LAW
+
+- Reddit and Bluesky provide official APIs for this kind of collection.
+  YouTube, TikTok, Instagram, and Facebook collection reads public pages, which
+  their terms of service may restrict. Know which you are using.
+- The app never logs in to any platform to reach private content, and it does
+  not support collecting whole Instagram or Facebook profiles for that reason.
+- Research you plan to publish or share needs IRB approval or a documented
+  exemption before you collect, not after.
+
+Discussion: Does a platform's terms of service change what is ethical, or only
+what is permitted?
+
+
+8. HARMFUL AND ILLEGAL CONTENT
+
+- Social media data can contain violence, hate, self-harm, and sexual content.
+  Plan for researcher wellbeing: take breaks, and do not review disturbing
+  content alone for long stretches.
+- If you encounter content that sexualizes minors: stop, do not save, copy, or
+  share it, tell your instructor, and report it to NCMEC at
+  https://report.cybertip.org. Possessing it is a crime regardless of intent.
+- By default the app deletes downloaded videos and images after the model reads
+  them. Leave "Keep downloaded media files" off unless you have a specific need.
+
+Discussion: Whose job is it to decide a video is too harmful to analyze?
+
+
+9. COLLECT LESS, KEEP LESS
+
+- Collect only what your research question needs. If you do not need comments,
+  leave comments at 0. If you do not need names, keep pseudonymization on.
+- Everything you keep is something that can leak. Decide your deletion date at
+  the start of the project and write it down.
+
+Closing prompt: For your own project, write one sentence each on who you are
+studying, who the bystanders are, what you will do with the linking key, and
+when you will delete the data.
+
+
+Sources for the speaker-label figures:
+  Indic DiarBench (2026), https://arxiv.org/abs/2607.23808
+  DiarizationLM, https://arxiv.org/abs/2401.03506
