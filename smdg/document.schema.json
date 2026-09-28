@@ -1,0 +1,304 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/kwartler/social-media-data-gathering/blob/main/smdg/document.schema.json",
+  "title": "Social media corpus document",
+  "description": "One line of corpus.jsonl. Every platform uses these same fields; fields a platform lacks are empty strings, empty lists, or null.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "doc_id",
+    "platform",
+    "doc_type",
+    "post_id",
+    "parent_id",
+    "url",
+    "author",
+    "author_id",
+    "community",
+    "created_at",
+    "title",
+    "text",
+    "caption_transcript",
+    "caption_source",
+    "llm_transcript",
+    "on_screen_text",
+    "visual_description",
+    "audio_description",
+    "speakers",
+    "alt_text",
+    "media_type",
+    "language",
+    "hashtags",
+    "like_count",
+    "reply_count",
+    "share_count",
+    "view_count",
+    "ai_generated",
+    "llm_model",
+    "llm_error",
+    "translation_language",
+    "translated_title",
+    "translated_text",
+    "translated_caption_transcript",
+    "translated_llm_transcript",
+    "translated_on_screen_text",
+    "source_input",
+    "collected_at",
+    "segments"
+  ],
+  "properties": {
+    "doc_id": {
+      "type": "string",
+      "description": "Unique id: platform_doctype_id."
+    },
+    "platform": {
+      "type": "string",
+      "description": "Source platform.",
+      "enum": [
+        "youtube",
+        "tiktok",
+        "instagram",
+        "facebook",
+        "reddit",
+        "bluesky"
+      ]
+    },
+    "doc_type": {
+      "type": "string",
+      "description": "post or comment.",
+      "enum": [
+        "post",
+        "comment"
+      ]
+    },
+    "post_id": {
+      "type": "string",
+      "description": "Platform id of the post this document belongs to."
+    },
+    "parent_id": {
+      "type": "string",
+      "description": "For comments, the doc_id being replied to. Empty for posts."
+    },
+    "url": {
+      "type": "string",
+      "description": "Link to the document. Empty when pseudonymized."
+    },
+    "author": {
+      "type": "string",
+      "description": "Account name, or a pseudonym such as u_3f9a1c02de."
+    },
+    "author_id": {
+      "type": "string",
+      "description": "Platform account id, or the pseudonym."
+    },
+    "community": {
+      "type": "string",
+      "description": "Subreddit for Reddit; empty elsewhere."
+    },
+    "created_at": {
+      "type": "string",
+      "description": "Posting time, ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ). Empty if unknown."
+    },
+    "title": {
+      "type": "string",
+      "description": "Title (YouTube and Reddit posts)."
+    },
+    "text": {
+      "type": "string",
+      "description": "What the author typed. Never AI-generated."
+    },
+    "caption_transcript": {
+      "type": "string",
+      "description": "Speech transcript from platform captions (YouTube timedtext, TikTok captions)."
+    },
+    "caption_source": {
+      "type": "string",
+      "description": "manual, auto, none, or empty for comments.",
+      "enum": [
+        "manual",
+        "auto",
+        "none",
+        ""
+      ]
+    },
+    "llm_transcript": {
+      "type": "string",
+      "description": "Speech transcript from the model, one line per speaker turn, prefixed with the speaker label (A:, B:, ?:)."
+    },
+    "on_screen_text": {
+      "type": "string",
+      "description": "Text shown in the video or images, from the model, separated by ' | '."
+    },
+    "visual_description": {
+      "type": "string",
+      "description": "Description of the visuals, from the model."
+    },
+    "audio_description": {
+      "type": "string",
+      "description": "Music and non-speech audio, from the model."
+    },
+    "speakers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "description",
+          "on_screen"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "on_screen": {
+            "type": "boolean"
+          }
+        }
+      },
+      "description": "Distinct voices the model heard, labeled A, B, C in order of first speech."
+    },
+    "alt_text": {
+      "type": "string",
+      "description": "Author-written image descriptions (Bluesky)."
+    },
+    "media_type": {
+      "type": "string",
+      "description": "video, image, mixed, or text.",
+      "enum": [
+        "video",
+        "image",
+        "mixed",
+        "text",
+        ""
+      ]
+    },
+    "language": {
+      "type": "string",
+      "description": "Language code from the platform, or from the model if the platform gave none."
+    },
+    "hashtags": {
+      "type": "string",
+      "description": "Space-separated hashtags without #."
+    },
+    "like_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Likes (Reddit: net score) at collection time."
+    },
+    "reply_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Replies or comments at collection time."
+    },
+    "share_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Shares, reposts, or quotes at collection time."
+    },
+    "view_count": {
+      "type": [
+        "integer",
+        "null"
+      ],
+      "description": "Views at collection time."
+    },
+    "ai_generated": {
+      "type": "boolean",
+      "description": "True when any model-produced field (extraction or translation) has content."
+    },
+    "llm_model": {
+      "type": "string",
+      "description": "OpenRouter model that produced the model fields."
+    },
+    "llm_error": {
+      "type": "string",
+      "description": "Why model extraction or translation was skipped or failed."
+    },
+    "translation_language": {
+      "type": "string",
+      "description": "Target language of the translated_* fields. Empty when translation was off."
+    },
+    "translated_title": {
+      "type": "string",
+      "description": "Model translation of title."
+    },
+    "translated_text": {
+      "type": "string",
+      "description": "Model translation of text."
+    },
+    "translated_caption_transcript": {
+      "type": "string",
+      "description": "Model translation of caption_transcript."
+    },
+    "translated_llm_transcript": {
+      "type": "string",
+      "description": "Model translation of llm_transcript, keeping speaker labels."
+    },
+    "translated_on_screen_text": {
+      "type": "string",
+      "description": "Model translation of on_screen_text."
+    },
+    "source_input": {
+      "type": "string",
+      "description": "Exactly what was pasted to collect this document."
+    },
+    "collected_at": {
+      "type": "string",
+      "description": "Collection time, ISO 8601 UTC."
+    },
+    "segments": {
+      "type": "array",
+      "description": "Time-stamped transcript pieces for this document (posts only).",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "source",
+          "speaker",
+          "start_seconds",
+          "end_seconds",
+          "text"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "caption_manual",
+              "caption_auto",
+              "llm"
+            ]
+          },
+          "speaker": {
+            "type": "string",
+            "description": "Speaker label for model segments (A, B, ?); empty for captions."
+          },
+          "start_seconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "end_seconds": {
+            "type": [
+              "number",
+              "null"
+            ]
+          },
+          "text": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}

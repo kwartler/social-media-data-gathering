@@ -1,0 +1,171 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Social Media Data Gathering</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <header>
+    <div class="header-row">
+      <div>
+        <h1>Social Media Data Gathering</h1>
+        <p class="tag">Collect social media text for NLP research. Every platform exports the same JSON schema.</p>
+      </div>
+      <div class="header-btns">
+        <button id="settingsBtn" title="API keys and model">Settings</button>
+        <button id="quitBtn" title="Stop the server and quit">Quit</button>
+      </div>
+    </div>
+    <nav class="tabs" id="tabs"></nav>
+  </header>
+
+  <main>
+    <div id="keyWarning" class="banner hidden"></div>
+
+    <!-- Platform panel: rebuilt by app.js for the active tab -->
+    <div id="platformPane">
+      <p id="pNote" class="note"></p>
+
+      <section class="block">
+        <label class="lbl" for="links" id="linksLabel">Links, one per line</label>
+        <textarea id="links" rows="5" spellcheck="false"></textarea>
+        <div id="classifyInfo" class="muted small"></div>
+      </section>
+
+      <section class="block" id="accountBlock">
+        <label class="lbl" for="acctInput" id="acctLabel">Account</label>
+        <div class="row tight">
+          <input id="acctInput" type="text">
+          <label>Recent posts <input id="acctLimit" type="number" min="1" max="1000" value="25"></label>
+          <select id="acctSort" class="hidden">
+            <option value="new">new</option><option value="top">top</option><option value="hot">hot</option>
+          </select>
+          <button id="acctGo">List posts</button>
+        </div>
+        <p id="acctNote" class="muted small"></p>
+      </section>
+
+      <section class="block" id="searchBlock">
+        <label class="lbl" for="searchQuery">Keyword or hashtag search</label>
+        <div class="row tight">
+          <input id="searchQuery" type="text" placeholder="#climate, &quot;large language models&quot;, ...">
+          <input id="searchSub" type="text" placeholder="subreddit (optional)" class="narrow hidden">
+          <label>Max <input id="searchLimit" type="number" min="1" max="1000" value="50"></label>
+          <select id="searchSort"><option value="latest">latest</option><option value="top">top</option></select>
+          <button id="searchGo">Search</button>
+        </div>
+        <p id="searchNote" class="muted small"></p>
+      </section>
+
+      <!-- Listed posts (account or search) -->
+      <section id="listView" class="card hidden">
+        <div class="row sticky">
+          <label><input type="checkbox" id="lAll" checked> Select all visible</label>
+          <input id="lFilter" placeholder="Filter..." type="search">
+          <span id="lCount" class="muted">0 posts</span>
+          <button id="lClear">Clear list</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th></th><th></th><th>Post</th><th>Author</th><th>Posted</th></tr></thead>
+            <tbody id="lBody"></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section id="optionsCard" class="card">
+        <h3>Collection options</h3>
+        <div class="opts">
+          <label id="optYtSourceWrap">Transcript source
+            <select id="optYtSource">
+              <option value="captions">YouTube captions (timedtext API)</option>
+              <option value="model">Model (downloads the video)</option>
+              <option value="both">Both, side by side</option>
+            </select></label>
+          <label id="optLlmWrap"><input type="checkbox" id="optLlm" checked> Extract text from video and images with the model
+            <span class="muted small">(dialog transcript, on-screen text, visual description)</span></label>
+          <label id="optMaxWrap">Max video length for the model <input id="optMaxSecs" type="number" min="10" max="3600" value="300"> seconds</label>
+          <label id="optLangWrap">Caption language
+            <select id="optLang"></select></label>
+          <label>Translate to
+            <input id="optTranslate" type="text" list="translateLangs" placeholder="Off" class="mid">
+            <span class="muted small">Adds translated fields; originals are kept.</span></label>
+          <datalist id="translateLangs">
+            <option value="English"><option value="Spanish"><option value="French"><option value="German">
+            <option value="Portuguese"><option value="Italian"><option value="Chinese (Simplified)"><option value="Japanese">
+            <option value="Korean"><option value="Arabic"><option value="Hindi"><option value="Russian">
+          </datalist>
+          <label id="optCommentsWrap">Comments per post <input id="optComments" type="number" min="0" max="500" value="0"></label>
+          <label><input type="checkbox" id="optPseudo" checked> Pseudonymize authors and @mentions</label>
+          <label><input type="checkbox" id="optIdent" checked> Include identifiable folder (linking key, raw data)</label>
+          <label id="optKeepWrap"><input type="checkbox" id="optKeep"> Keep downloaded media files</label>
+        </div>
+        <div class="row between">
+          <span class="muted small" id="modelLine">Model: <code id="modelName"></code></span>
+          <button id="runBtn" class="primary">Collect</button>
+        </div>
+      </section>
+    </div>
+
+    <!-- Log -->
+    <section id="logPane" class="hidden">
+      <p class="muted small">Every collection attempt on this computer, newest first. Stored in <code id="logPath"></code>.</p>
+      <div class="table-wrap">
+        <table><thead><tr><th>When</th><th>Platform</th><th>Input</th><th>Result</th></tr></thead><tbody id="logBody"></tbody></table>
+      </div>
+    </section>
+
+    <div id="status" class="status"></div>
+
+    <section id="progressView" class="card hidden">
+      <div class="row between">
+        <h3 id="progTitle">Collecting...</h3>
+        <a id="zipLink" class="button primary hidden" href="#">Download corpus (.zip)</a>
+      </div>
+      <p class="ai-label" id="aiLabel">Model-extracted text is AI-generated and unverified. Check a sample before analysis.</p>
+      <div class="table-wrap">
+        <table><thead><tr><th>#</th><th>Input</th><th>Result</th></tr></thead><tbody id="progBody"></tbody></table>
+      </div>
+    </section>
+  </main>
+
+  <!-- Settings dialog -->
+  <dialog id="settingsDlg">
+    <form method="dialog" id="settingsForm">
+      <h2>Settings</h2>
+      <p class="muted small">Saved on this computer only, in <code id="dataDir"></code>. Leave a key field blank to keep the saved value.</p>
+
+      <h3>OpenRouter <span class="muted small">(TikTok, Instagram, Facebook, and media on Reddit and Bluesky)</span></h3>
+      <label>API key <input type="password" id="sOpenrouter" placeholder="sk-or-..." autocomplete="off"></label>
+      <label>Model
+        <select id="sModel"></select>
+      </label>
+      <p class="muted small">Only models that accept video are listed. Price is per million input tokens.</p>
+
+      <h3>Reddit <span class="muted small">(required for Reddit)</span></h3>
+      <label>Client ID <input type="text" id="sRedditId" autocomplete="off"></label>
+      <label>Client secret <input type="password" id="sRedditSecret" autocomplete="off"></label>
+
+      <h3>Bluesky <span class="muted small">(only for keyword search)</span></h3>
+      <label>Handle <input type="text" id="sBskyHandle" placeholder="name.bsky.social" autocomplete="off"></label>
+      <label>App password <input type="password" id="sBskyPw" placeholder="xxxx-xxxx-xxxx-xxxx" autocomplete="off"></label>
+
+      <div class="row between">
+        <span id="settingsStatus" class="muted small"></span>
+        <div>
+          <button value="cancel" formnovalidate>Close</button>
+          <button id="settingsSave" class="primary" value="default">Save</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
+
+  <footer>
+    <small>Runs locally. Media goes only to the OpenRouter model you choose. Follow your IRB protocol and each platform's terms.</small>
+  </footer>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>
