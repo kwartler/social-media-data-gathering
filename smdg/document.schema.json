@@ -8,6 +8,7 @@
   "required": [
     "doc_id",
     "platform",
+    "site",
     "doc_type",
     "post_id",
     "parent_id",
@@ -53,15 +54,21 @@
     },
     "platform": {
       "type": "string",
-      "description": "Source platform.",
+      "description": "Source platform, or other for any other site yt-dlp supports (see site).",
       "enum": [
         "youtube",
         "tiktok",
         "instagram",
         "facebook",
         "reddit",
-        "bluesky"
+        "bluesky",
+        "truthsocial",
+        "other"
       ]
+    },
+    "site": {
+      "type": "string",
+      "description": "Website the document came from, such as youtube.com or rumble.com. Use this to tell 'other' sites apart."
     },
     "doc_type": {
       "type": "string",
@@ -101,7 +108,7 @@
     },
     "title": {
       "type": "string",
-      "description": "Title (YouTube and Reddit posts)."
+      "description": "Title (YouTube, Reddit, and other video sites)."
     },
     "text": {
       "type": "string",
@@ -163,7 +170,7 @@
     },
     "alt_text": {
       "type": "string",
-      "description": "Author-written image descriptions (Bluesky)."
+      "description": "Author-written image descriptions (Bluesky, Truth Social)."
     },
     "media_type": {
       "type": "string",

@@ -123,6 +123,38 @@ Discussion: Does a platform's terms of service change what is ethical, or only
 what is permitted?
 
 
+7a. CASE STUDY: TRUTH SOCIAL AND TERMS OF SERVICE
+
+- The app includes a Truth Social tab, and it opens with a warning for a reason.
+  Truth Social offers no research API and its terms of service likely prohibit
+  automated collection. Its servers reject ordinary requests; the app gets
+  through only by presenting itself as a Chrome browser to slip past bot
+  protection.
+- That is a different situation from Reddit or Bluesky, which publish APIs for
+  exactly this use. Here the platform has signaled "no" technically and, likely,
+  contractually. Getting around that is a choice with risks: account or IP
+  blocks, legal exposure, and questions from reviewers and your IRB.
+- Arguments researchers make on each side:
+    For: posts by public officials are matters of public interest; courts have
+      been receptive to collecting public, logged-out data; there may be no
+      other way to study the platform.
+    Against: terms are a contract; evading technical blocks goes further than
+      reading a public page; the platform can revoke access at any time, which
+      threatens reproducibility.
+- Practical rules if you use it: get IRB guidance first; collect only the
+  accounts and posts your question needs; collect slowly (the app paces
+  requests, and a 429 error means stop and wait); keep the collection log and
+  manifest, and report exactly how the data were obtained in your methods.
+- Many Truth Social posts are only an image or a video. In one sample of 100
+  posts from a single account, 72 had no text at all. Text-only analysis would
+  silently miss most of that account's communication, which is why model-based
+  description matters here, and why it must be hand-checked.
+
+Discussion: A public official posts primarily on a platform whose terms forbid
+automated collection. Is studying those posts in the public interest enough to
+justify collecting them anyway? Who should make that call?
+
+
 8. HARMFUL AND ILLEGAL CONTENT
 
 - Social media data can contain violence, hate, self-harm, and sexual content.

@@ -30,6 +30,15 @@ SCHEMA = json.loads((Path(__file__).parent.parent / "smdg" / "document.schema.js
     ("reddit:u/spez", "reddit", "account"),
     ("https://bsky.app/profile/bsky.app/post/3mw2cdr44fc2a", "bluesky", "post"),
     ("bsky:bsky.app", "bluesky", "account"),
+    ("https://truthsocial.com/@realDonaldTrump/posts/117346090177597599", "truthsocial", "post"),
+    ("https://truthsocial.com/@realDonaldTrump/117346090177597599", "truthsocial", "post"),
+    ("https://truthsocial.com/@realDonaldTrump", "truthsocial", "account"),
+    ("truth:@realDonaldTrump", "truthsocial", "account"),
+    ("https://rumble.com/v7g1oa0-q-after-hours-ep.-37.html", "other", "post"),
+    ("https://www.bitchute.com/video/UGlrF9o9b-Q/", "other", "post"),
+    ("https://www.dailymotion.com/video/x5kesuj", "other", "post"),
+    ("https://odysee.com/@Odysee:8/first-day-in-lbry:e", "other", "post"),
+    ("other:https://rumble.com/c/Rumble", "other", "account"),
 ])
 def test_classify(url, platform, kind):
     t = classify.classify(url)
@@ -46,6 +55,17 @@ def test_classify(url, platform, kind):
 def test_classify_rejects(url):
     with pytest.raises(ValueError):
         classify.classify(url)
+
+
+def test_vimeo_pages_use_the_player_url():
+    assert classify.classify("https://vimeo.com/76979871")["url"] == "https://player.vimeo.com/video/76979871"
+
+
+def test_truthsocial_html_to_text():
+    from smdg.truthsocial import html_to_text
+    raw = '<p>Big news!<br>Line two &amp; more</p><p>See <span class="h-card"><a href="x">@<span>someone</span></a></span></p>'
+    assert html_to_text(raw) == "Big news!\nLine two & more\n\nSee @someone"
+    assert html_to_text("<p></p>") == ""
 
 
 def test_parse_vtt_drops_markup_and_rolling_duplicates():
@@ -96,11 +116,12 @@ def test_none_mode_changes_nothing():
 
 def test_documents_match_schema_for_every_platform():
     v = Draft202012Validator(SCHEMA)
-    for plat in ("youtube", "tiktok", "instagram", "facebook", "reddit", "bluesky"):
+    for plat in ("youtube", "tiktok", "instagram", "facebook", "reddit", "bluesky", "truthsocial", "other"):
         row = new_row(plat, "post", "abc", text="#nlp is fun", like_count="12", view_count=None, created_at="2024-05-01T10:00:00.123Z")
         row["speakers"] = [{"id": "A", "description": "person facing camera", "on_screen": True}]
         doc = to_document(row, [{"doc_id": row["doc_id"], "source": "llm", "speaker": "A", "start_seconds": 0.5, "end_seconds": "", "text": "hi"}])
         assert list(v.iter_errors(doc)) == []
+        assert doc["site"] == ("" if plat == "other" else doc["site"]) and (plat == "other" or "." in doc["site"])
         assert doc["like_count"] == 12 and doc["view_count"] is None
         assert doc["created_at"] == "2024-05-01T10:00:00Z" and doc["hashtags"] == "nlp"
     assert set(SCHEMA["properties"]) == set(COLUMNS) | {"segments"}

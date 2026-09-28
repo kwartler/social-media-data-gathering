@@ -15,7 +15,8 @@ INT = {"like_count", "reply_count", "share_count", "view_count"}
 
 DESCRIPTIONS = {
     "doc_id": "Unique id: platform_doctype_id.",
-    "platform": "Source platform.",
+    "platform": "Source platform, or other for any other site yt-dlp supports (see site).",
+    "site": "Website the document came from, such as youtube.com or rumble.com. Use this to tell 'other' sites apart.",
     "doc_type": "post or comment.",
     "post_id": "Platform id of the post this document belongs to.",
     "parent_id": "For comments, the doc_id being replied to. Empty for posts.",
@@ -24,7 +25,7 @@ DESCRIPTIONS = {
     "author_id": "Platform account id, or the pseudonym.",
     "community": "Subreddit for Reddit; empty elsewhere.",
     "created_at": "Posting time, ISO 8601 UTC (YYYY-MM-DDTHH:MM:SSZ). Empty if unknown.",
-    "title": "Title (YouTube and Reddit posts).",
+    "title": "Title (YouTube, Reddit, and other video sites).",
     "text": "What the author typed. Never AI-generated.",
     "caption_transcript": "Speech transcript from platform captions (YouTube timedtext, TikTok captions).",
     "caption_source": "manual, auto, none, or empty for comments.",
@@ -33,7 +34,7 @@ DESCRIPTIONS = {
     "visual_description": "Description of the visuals, from the model.",
     "audio_description": "Music and non-speech audio, from the model.",
     "speakers": "Distinct voices the model heard, labeled A, B, C in order of first speech.",
-    "alt_text": "Author-written image descriptions (Bluesky).",
+    "alt_text": "Author-written image descriptions (Bluesky, Truth Social).",
     "media_type": "video, image, mixed, or text.",
     "language": "Language code from the platform, or from the model if the platform gave none.",
     "hashtags": "Space-separated hashtags without #.",
@@ -55,7 +56,7 @@ DESCRIPTIONS = {
 }
 
 ENUMS = {
-    "platform": ["youtube", "tiktok", "instagram", "facebook", "reddit", "bluesky"],
+    "platform": ["youtube", "tiktok", "instagram", "facebook", "reddit", "bluesky", "truthsocial", "other"],
     "doc_type": ["post", "comment"],
     "caption_source": ["manual", "auto", "none", ""],
     "media_type": ["video", "image", "mixed", "text", ""],

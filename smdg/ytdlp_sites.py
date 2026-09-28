@@ -61,9 +61,15 @@ def collect(target: dict, opts: dict) -> dict:
         extra["extractor_args"] = {
             "youtube": {"player_client": YT_CLIENTS, "max_comments": [str(n_comments), "all", "all", "all"]},
         }
+    if platform == "other":
+        extra.update(_impersonate())
     with yt_dlp.YoutubeDL(_opts(**extra)) as ydl:
         info = ydl.extract_info(target["url"], download=False)
         info = ydl.sanitize_info(info)
+        if info.get("is_live") or info.get("live_status") in ("is_live", "is_upcoming"):
+            raise ValueError("This is a live or upcoming stream. Collect it after the broadcast ends and is saved.")
+        if platform == "other" and info.get("_type") == "playlist" and len(info.get("entries") or []) > 1:
+            raise ValueError("This link is a channel or playlist, not a single video. Use the Channel box to list its videos.")
 
         entries = info.get("entries") if info.get("_type") == "playlist" else None
         main = info
@@ -100,6 +106,10 @@ def collect(target: dict, opts: dict) -> dict:
     )
     if main.get("tags"):
         row["hashtags"] = " ".join(sorted(set(row["hashtags"].split()) | {t.lstrip("#") for t in main["tags"] if t}))
+
+    if platform == "other":
+        row["site"] = main.get("webpage_url_domain") or info.get("webpage_url_domain") or target.get("site", "")
+        row["title"] = main.get("title") or ""
 
     rows = [row]
     comments = info.get("comments") or main.get("comments") or []
@@ -144,6 +154,16 @@ def collect(target: dict, opts: dict) -> dict:
         return download_media(target["url"], info, entries, post_id, platform)
 
     return {"rows": rows, "segments": segments, "raw": raw, "timedtext": timedtext, "fetch_media": fetch_media}
+
+
+def _impersonate() -> dict:
+    """Browser impersonation for sites behind bot protection (Rumble). Empty if unavailable."""
+    try:
+        from yt_dlp.networking.impersonate import ImpersonateTarget
+        import curl_cffi  # noqa: F401
+        return {"impersonate": ImpersonateTarget("chrome")}
+    except Exception:
+        return {}
 
 
 def _upload_date(d) -> str:
@@ -192,6 +212,7 @@ def download_media(url: str, info: dict, entries, post_id: str, platform: str) -
 
     if videos:
         opts = _opts(
+            **(_impersonate() if platform == "other" else {}),
             skip_download=False,
             format="b[height<=?480][vcodec!=?none][acodec!=?none]/bv*[height<=?480]+ba/b[height<=?720]/bv*+ba/b",
             merge_output_format="mp4",
@@ -228,9 +249,12 @@ def list_account(target: dict, limit: int) -> Iterator[dict]:
     url = target["url"]
     if target["platform"] == "youtube" and not url.rstrip("/").endswith(("/videos", "/shorts")):
         url = url.rstrip("/") + "/videos"
-    opts = _opts(extract_flat="in_playlist", playlistend=limit)
+    opts = _opts(extract_flat="in_playlist", playlistend=limit,
+                 **(_impersonate() if target["platform"] == "other" else {}))
     with yt_dlp.YoutubeDL(opts) as ydl:
         info = ydl.extract_info(url, download=False)
+    if target["platform"] == "other" and info.get("_type") != "playlist":
+        raise ValueError("This link is a single video, not a channel or playlist. Paste it in the links box instead.")
     for e in (info.get("entries") or [])[:limit]:
         if e:
             yield _list_item(target["platform"], e)

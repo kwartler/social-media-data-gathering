@@ -12,10 +12,10 @@ import zipfile
 from pathlib import Path
 from typing import Iterator
 
-from . import bluesky, classify, config, errors, llm, reddit, ytdlp_sites
+from . import bluesky, classify, config, errors, llm, reddit, truthsocial, ytdlp_sites
 from .records import COLUMNS, SEGMENT_COLUMNS, TRANSLATABLE, now_iso, pseudonymize
 
-__version__ = "0.1.0"
+__version__ = "0.2.0"
 
 COLLECTORS = {
     "youtube": ytdlp_sites.collect,
@@ -24,10 +24,12 @@ COLLECTORS = {
     "facebook": ytdlp_sites.collect,
     "bluesky": bluesky.collect,
     "reddit": reddit.collect,
+    "truthsocial": truthsocial.collect,
+    "other": ytdlp_sites.collect,
 }
 
 # Seconds to pause between items, per platform, to stay under rate limits
-PAUSE = {"youtube": 1.5, "tiktok": 2.0, "instagram": 4.0, "facebook": 3.0, "bluesky": 0.3, "reddit": 1.0}
+PAUSE = {"youtube": 1.5, "tiktok": 2.0, "instagram": 4.0, "facebook": 3.0, "bluesky": 0.3, "reddit": 1.0, "truthsocial": 5.0, "other": 2.0}
 
 DEFAULT_OPTS = {
     "comments": 0,
@@ -50,12 +52,14 @@ def list_account(raw: str, limit: int, sort: str = "new") -> Iterator[dict]:
     t = classify.classify(raw)
     if t["kind"] != "account":
         raise ValueError("That is a single post, not an account. Use Collect instead.")
-    if t["platform"] in ("youtube", "tiktok"):
+    if t["platform"] in ("youtube", "tiktok", "other"):
         yield from ytdlp_sites.list_account(t, limit)
     elif t["platform"] == "bluesky":
         yield from bluesky.list_account(t, limit)
     elif t["platform"] == "reddit":
         yield from reddit.list_account(t, limit, sort)
+    elif t["platform"] == "truthsocial":
+        yield from truthsocial.list_account(t, limit)
 
 
 def search(platform: str, query: str, limit: int, sort: str = "latest", subreddit: str = "") -> Iterator[dict]:

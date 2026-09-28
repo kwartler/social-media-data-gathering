@@ -26,9 +26,14 @@
 
     <!-- Platform panel: rebuilt by app.js for the active tab -->
     <div id="platformPane">
+      <div id="tosWarning" class="tos-warning hidden" role="alert"></div>
       <p id="pNote" class="note"></p>
 
       <section class="block">
+        <div id="siteRow" class="row tight site-row hidden">
+          <label>Site <select id="siteSelect"></select></label>
+          <a href="https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md" target="_blank" rel="noopener">Full list of supported sites (yt-dlp)</a>
+        </div>
         <label class="lbl" for="links" id="linksLabel">Links, one per line</label>
         <textarea id="links" rows="5" spellcheck="false"></textarea>
         <div id="classifyInfo" class="muted small"></div>
@@ -104,7 +109,7 @@
               <option value="everyone">Everyone, including post authors</option>
               <option value="none">No one</option>
             </select></label>
-          <label><input type="checkbox" id="optIdent" checked> Include identifiable folder (linking key, raw data)</label>
+          <label><input type="checkbox" id="optIdent" checked> <span id="optIdentText">Include identifiable folder (linking key, raw data)</span></label>
           <label id="optKeepWrap"><input type="checkbox" id="optKeep"> Keep downloaded media files</label>
         </div>
         <div class="row between">

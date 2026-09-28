@@ -38,7 +38,15 @@ if (!file.exists(key_file)) {
 
 corpus <- stream_in(file(file.path(unzip_dir, "corpus.jsonl"), encoding = "UTF-8"), verbose = FALSE)
 key <- read.csv(key_file, encoding = "UTF-8", stringsAsFactors = FALSE, na.strings = character(0))
-pseudonyms <- read.csv(names_file, encoding = "UTF-8", stringsAsFactors = FALSE, na.strings = character(0))
+if (file.exists(names_file)) {
+  pseudonyms <- read.csv(names_file, encoding = "UTF-8", stringsAsFactors = FALSE, na.strings = character(0))
+} else {
+  # Exports from app version 0.1.0 have no pseudonym key, so @mentions stay coded
+  message("Note: this export was made by an older version of the app (0.1.0). Authors and links ",
+          "will be restored, but @mentions inside the text cannot be. Re-collect with version 0.2.0 ",
+          "or later to restore mentions too.")
+  pseudonyms <- data.frame(pseudonym = character(0), original = character(0))
+}
 
 # ---- 2. Put real authors and links back -------------------------------------
 m <- match(corpus$doc_id, key$doc_id)

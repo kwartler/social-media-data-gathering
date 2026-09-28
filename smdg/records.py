@@ -14,6 +14,7 @@ from . import config
 COLUMNS = [
     "doc_id",
     "platform",
+    "site",
     "doc_type",
     "post_id",
     "parent_id",
@@ -99,10 +100,18 @@ def norm_iso(s: str) -> str:
     return dt.astimezone(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
+PLATFORM_SITES = {
+    "youtube": "youtube.com", "tiktok": "tiktok.com", "instagram": "instagram.com",
+    "facebook": "facebook.com", "reddit": "reddit.com", "bluesky": "bsky.app",
+    "truthsocial": "truthsocial.com",
+}
+
+
 def new_row(platform: str, doc_type: str, post_id: str, **fields) -> dict:
     row = {c: "" for c in COLUMNS}
     row.update(
         platform=platform,
+        site=PLATFORM_SITES.get(platform, ""),
         doc_type=doc_type,
         post_id=str(post_id),
         doc_id=f"{platform}_{doc_type}_{fields.get('comment_id') or post_id}",

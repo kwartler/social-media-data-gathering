@@ -59,13 +59,50 @@ const PLATFORMS = {
     search: { note: "Keyword search needs your Bluesky handle and an app password in Settings." },
     comments: true, captions: false, model: true,
   },
+  truthsocial: {
+    label: "Truth Social",
+    warning: "<strong>Terms of service warning.</strong> Truth Social does not offer a research API, and its terms of service "
+      + "likely prohibit automated collection. Its servers reject ordinary requests, so this tab only works by presenting "
+      + "itself as a Chrome browser. Using it may violate the platform's terms, and access can stop at any time. "
+      + "<strong>Get IRB guidance before collecting data you plan to publish or share,</strong> collect only what your "
+      + "question needs, and consider whether a public figure's posts can be studied from a source that permits it.",
+    note: "Best effort, logged out. Single posts and an account's recent posts only; replies and search need a login, which this app never uses. "
+      + "Many posts are images or video with no text, so the model step matters here. Requests are paced slowly because Truth Social rate-limits.",
+    linksLabel: "Post links, one per line",
+    placeholder: "https://truthsocial.com/@name/posts/123...\nhttps://truthsocial.com/@name/123...",
+    account: { label: "Account", placeholder: "https://truthsocial.com/@name or @name", prefix: "truth:", note: "Lists recent original posts (reposts and replies are skipped), about 20 per request with a pause between requests." },
+    search: null,
+    comments: false, captions: false, model: true,
+  },
+  other: {
+    label: "Other",
+    note: "Any other video site the yt-dlp downloader supports (about 1,700). Pick a popular site for examples, or choose "
+      + "\"Any other supported site\" and paste links from anywhere on the full list. Works like TikTok: the title and "
+      + "description come from the site, and the model transcribes and describes the video. Live streams can only be collected after they end.",
+    linksLabel: "Video links, one per line",
+    placeholder: "",
+    account: { label: "Channel or playlist", placeholder: "", prefix: "other:", alwaysPrefix: true, note: "Lists a channel's or playlist's recent videos, where the site supports it." },
+    search: null,
+    comments: false, captions: true, model: true,
+  },
 };
+
+// Popular sites for the Other tab. "any" accepts every site yt-dlp supports.
+const OTHER_SITES = [
+  { key: "rumble", label: "Rumble", post: "https://rumble.com/v6abc12-video-title.html", channel: "https://rumble.com/c/ChannelName" },
+  { key: "bitchute", label: "BitChute", post: "https://www.bitchute.com/video/AbCdEf123/", channel: "https://www.bitchute.com/channel/name/" },
+  { key: "odysee", label: "Odysee", post: "https://odysee.com/@channel:1/video-name:2", channel: "https://odysee.com/@channel:1" },
+  { key: "dailymotion", label: "Dailymotion", post: "https://www.dailymotion.com/video/x8abc12", channel: "https://www.dailymotion.com/username" },
+  { key: "twitch", label: "Twitch (clips and past broadcasts)", post: "https://www.twitch.tv/videos/1234567890", channel: "https://www.twitch.tv/name/videos" },
+  { key: "bilibili", label: "Bilibili", post: "https://www.bilibili.com/video/BV1ab4y1c7de", channel: "https://space.bilibili.com/12345" },
+  { key: "any", label: "Any other supported site", post: "Paste any video link from a site on the full list", channel: "A channel or playlist link from a supported site" },
+];
 
 // Per-tab state, so switching tabs keeps what you typed and listed
 const state = {};
 // Default pseudonymization: keep the channel you study on YouTube; elsewhere post authors are often private people
 for (const [p, cfg] of Object.entries(PLATFORMS)) {
-  state[p] = { links: "", listRows: [], acct: "", query: "", lang: "en", valid: [], pseudo: cfg.pseudonymize || "everyone" };
+  state[p] = { links: "", listRows: [], acct: "", query: "", lang: "en", valid: [], pseudo: cfg.pseudonymize || "everyone", ident: true };
 }
 let active = "youtube";
 let settings = {};
@@ -150,6 +187,7 @@ function saveTabState() {
   s.query = $("#searchQuery").value;
   s.lang = $("#optLang").value || s.lang;
   s.pseudo = $("#optPseudo").value;
+  s.ident = $("#optIdent").checked;
 }
 
 function switchTab(tab) {
@@ -165,10 +203,15 @@ function switchTab(tab) {
   const p = PLATFORMS[tab];
   const s = state[tab];
   $("#pNote").textContent = p.note;
+  show($("#siteRow"), tab === "other");
+  $("#tosWarning").innerHTML = p.warning || "";
+  show($("#tosWarning"), !!p.warning);
   $("#linksLabel").textContent = p.linksLabel;
   $("#links").placeholder = p.placeholder;
   $("#links").value = s.links;
   $("#optPseudo").value = s.pseudo;
+  $("#optIdent").checked = s.ident;
+  updateIdentLabel();
 
   show($("#accountBlock"), !!p.account);
   if (p.account) {
@@ -191,6 +234,8 @@ function switchTab(tab) {
   show($("#optLangWrap"), p.captions);
   show($("#optCommentsWrap"), p.comments);
   fillLangs(COMMON_LANGS.map(c => ({ code: c, label: c })), s.lang);
+
+  if (tab === "other") applySite();  // after the generic placeholders above
 
   renderList();
   updateBanner();
@@ -215,9 +260,39 @@ function updateModelOptions() {
   updateBanner();
 }
 
+// With "No one" there is no linking key; the folder would only hold raw platform data
+function updateIdentLabel() {
+  $("#optIdentText").textContent = $("#optPseudo").value === "none"
+    ? "Include raw platform data (identifiable/raw)"
+    : "Include identifiable folder (linking key, raw data)";
+}
+
+$("#optPseudo").addEventListener("change", () => {
+  $("#optIdent").checked = $("#optPseudo").value !== "none";
+  updateIdentLabel();
+});
+
 $("#optYtSource").addEventListener("change", updateModelOptions);
 $("#optLlm").addEventListener("change", updateModelOptions);
 $("#optTranslate").addEventListener("input", updateModelOptions);
+
+// -------- Other tab: site picker only changes the examples; any supported link is accepted --------
+function buildSites() {
+  const sel = $("#siteSelect");
+  for (const site of OTHER_SITES) {
+    const o = document.createElement("option");
+    o.value = site.key;
+    o.textContent = site.label;
+    sel.appendChild(o);
+  }
+  sel.addEventListener("change", applySite);
+}
+
+function applySite() {
+  const site = OTHER_SITES.find(x => x.key === $("#siteSelect").value) || OTHER_SITES[0];
+  $("#links").placeholder = site.post;
+  $("#acctInput").placeholder = site.channel;
+}
 
 // -------- Links: validate against the active platform --------
 let classifyTimer;
@@ -362,6 +437,7 @@ function accountInput(raw) {
   // Bare handles like "@name" or "r/sub" get the platform prefix the backend expects
   raw = raw.trim();
   const p = PLATFORMS[active].account;
+  if (p.alwaysPrefix) return p.prefix + raw;
   return /^https?:\/\/|\.(com|app)\//i.test(raw) ? raw : p.prefix + raw;
 }
 
@@ -567,4 +643,5 @@ $("#settingsSave").addEventListener("click", async (e) => {
 });
 
 buildTabs();
+buildSites();
 loadSettings().then(() => switchTab("youtube"));

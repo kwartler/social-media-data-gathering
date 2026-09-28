@@ -4,6 +4,7 @@ from __future__ import annotations
 import re
 
 RULES = [
+    (r"drm protected|drm", "This video is copy-protected (DRM), so it cannot be downloaded for the model. Its title and description were still collected."),
     (r"login|log in|cookies|registered users|sign in to view|private", "This post needs a login (private, followers-only, age-restricted, or a logged-out rate limit). The app never logs in. Wait a while and retry, or pick a public post."),
     (r"rate.?limit|429|too many requests|exceeded", "The platform is rate-limiting requests. Wait 10 to 15 minutes, then re-run."),
     (r"confirm you.?re not a bot", "YouTube is asking for a bot check. Wait a few minutes, or update the app (newer yt-dlp versions usually fix this)."),

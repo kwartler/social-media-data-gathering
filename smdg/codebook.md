@@ -18,7 +18,8 @@ Produced by social-media-data-gathering. Read this before analysis.
 | Column | Meaning |
 |---|---|
 | `doc_id` | Unique id: `platform_doctype_id`. |
-| `platform` | youtube, tiktok, instagram, facebook, reddit, bluesky. |
+| `platform` | youtube, tiktok, instagram, facebook, reddit, bluesky, truthsocial, or other (any other site yt-dlp supports). |
+| `site` | The website, such as `youtube.com` or `rumble.com`. Use it to tell sites apart within `other`. |
 | `doc_type` | `post` or `comment`. |
 | `post_id` | The platform id of the post this document belongs to. Comments share their post's `post_id`. |
 | `parent_id` | For comments, the `doc_id` of the post or comment being replied to. Use it to rebuild reply trees. |
@@ -26,7 +27,7 @@ Produced by social-media-data-gathering. Read this before analysis.
 | `author`, `author_id` | Account name and platform id, or a pseudonym such as `u_3f9a1c02de`. With "commenters and @mentions only", the authors of the collected posts keep their real names. The same account always gets the same pseudonym on the computer that collected it, and @mentions of that account in text use the same code. |
 | `community` | Subreddit for Reddit; blank elsewhere. |
 | `created_at` | When the document was posted, ISO 8601 UTC. |
-| `title` | Title (YouTube and Reddit posts only). |
+| `title` | Title (YouTube, Reddit, and other video sites). |
 | `text` | What the author typed: the caption, description, post body, or comment. Never AI-generated. |
 | `caption_transcript` | Speech transcript from captions the **platform** supplied (YouTube timedtext; TikTok when available). |
 | `caption_source` | `manual` (uploaded by the creator), `auto` (platform speech recognition), or `none`. |
@@ -35,7 +36,7 @@ Produced by social-media-data-gathering. Read this before analysis.
 | `visual_description` | The model's description of what is shown. |
 | `audio_description` | The model's note on music and other non-speech audio. |
 | `speakers` | The distinct voices the model heard, labeled `A`, `B`, `C` in order of first speech, each with a neutral description and whether they were on screen. JSON: a list of `{id, description, on_screen}`; CSV: `A: description (on screen) \| B: ...`. |
-| `alt_text` | Image descriptions written by the author (Bluesky). |
+| `alt_text` | Image descriptions written by the author (Bluesky, Truth Social). |
 | `media_type` | video, image, mixed, or text. |
 | `language` | Language code from the platform, or from the model when the platform gave none. |
 | `hashtags` | Hashtags found in `text` and platform tags, space separated, without `#`. |

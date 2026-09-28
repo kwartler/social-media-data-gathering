@@ -2,7 +2,8 @@
 
 A local app for collecting social media text for NLP research methods. It builds on
 [yt-timed-text](https://github.com/kwartler/yt-timed-text) and adds TikTok, Instagram,
-Facebook, Reddit, and Bluesky, plus an OpenRouter model step that turns video and images
+Facebook, Reddit, Bluesky, Truth Social, and roughly 1,700 other video sites (Rumble, BitChute,
+Odysee, Dailymotion, Twitch, Bilibili, and more), plus an OpenRouter model step that turns video and images
 into text you can analyze.
 
 Each platform has its own tab. Paste post links (or list an account, or run a keyword
@@ -50,6 +51,8 @@ after extraction unless you ask to keep it.
 | Facebook | Yes (public videos) | No | No | No | Nothing |
 | Bluesky | Yes | Profiles | Yes | Yes | App password for search only |
 | Reddit | Yes | Subreddits, users | Yes | Yes | Free Reddit API key |
+| Truth Social (see warning below) | Yes | Accounts | No | No | Nothing |
+| Other video sites (Other tab) | Yes | Channels and playlists, where the site allows | No | No | Nothing |
 | X/Twitter, Snapchat, Threads, LinkedIn | Not supported | | | | |
 
 The **OpenRouter key** is needed only for model steps: video and image to text, and
@@ -62,6 +65,20 @@ Notes:
 - **TikTok profile listing** uses an extractor that breaks from time to time. If it fails,
   retry later or paste video links.
 - **Instagram stories** require a login and are not supported.
+- **Truth Social: terms of service warning.** Truth Social offers no research API, and its
+  terms likely prohibit automated collection. Its servers reject ordinary requests, so the
+  app gets through only by presenting itself as a Chrome browser. Using this tab may violate
+  the platform's terms, and it can stop working at any time. Get IRB guidance before
+  collecting data you plan to publish or share. The tab shows this warning at the top.
+  Replies and search need a login and are not supported. Truth Social rate-limits hard, so
+  the app paces requests; if you see a 429 error, wait 15 to 30 minutes.
+- **Other tab.** Pick a popular site (Rumble, BitChute, Odysee, Dailymotion, Twitch,
+  Bilibili) for example links, or choose "Any other supported site" and paste links from
+  any site on yt-dlp's [full list of supported sites](https://github.com/yt-dlp/yt-dlp/blob/master/supportedsites.md).
+  Every document records its website in the `site` field (for example `rumble.com`).
+  Live streams can be collected only after they end. Copy-protected (DRM) videos, which
+  now includes most of Vimeo, give you the title and description but can't go to the model.
+  Rumble channel listing is currently broken in yt-dlp; paste Rumble video links instead.
 - **Instagram rate-limits logged-out access.** Large batches may start failing with a login
   message; wait 15 minutes and re-run the failed links.
 
@@ -137,12 +154,13 @@ it with your handle into Settings. Posts and profiles don't need this.
 
 ## Using it
 
-Pick the tab for your platform: **YouTube, TikTok, Instagram, Facebook, Reddit, Bluesky**, or
+Pick the tab for your platform: **YouTube, TikTok, Instagram, Facebook, Reddit, Bluesky,
+Truth Social, Other**, or
 **Log**. Each tab shows only what that platform supports:
 
 - **Links:** paste post links, one per line. The app confirms what it recognized and flags
   links that belong on another tab or aren't supported.
-- **Account** (YouTube, TikTok, Reddit, Bluesky): paste a channel, profile, subreddit
+- **Account** (YouTube, TikTok, Reddit, Bluesky, Truth Social, Other): paste a channel, profile, subreddit
   (`r/name`), or user (`u/name`), choose how many recent posts, and uncheck any you don't want.
 - **Search** (YouTube, Reddit, Bluesky): keyword or hashtag search.
 - **YouTube caption language:** with one video pasted, the menu lists that video's actual
@@ -163,7 +181,7 @@ Collection options:
 | Caption language | en | Which caption track to take (YouTube and TikTok). |
 | Translate to | off | Adds `translated_*` fields in this language for the title, text, transcripts, and on-screen text of every post and comment. Originals are never replaced. |
 | Pseudonymize | YouTube: commenters only. Other tabs: everyone | Replaces names and @mentions with stable codes such as `u_3f9a1c02de`. **Commenters and @mentions only** keeps the accounts you chose to study (for example a news channel) and codes everyone else. **Everyone** codes post authors too. **No one** turns it off. |
-| Include identifiable folder | on | Adds the keys that map codes back to real names and links, plus raw platform data, in a separate `identifiable/` folder. |
+| Include identifiable folder | on (off with "No one") | Adds the keys that map codes back to real names and links, plus raw platform data, in a separate `identifiable/` folder. With Pseudonymize set to "No one" there is no key, so this unchecks itself and becomes "Include raw platform data"; tick it to keep the raw data. |
 | Keep downloaded media | off | Leaves the downloaded videos and images on disk instead of deleting them. |
 
 ## What's in the zip
@@ -255,7 +273,8 @@ discussion prompts covering the points below.
   and prompt version (from `manifest.json`) in your methods.
 - Each platform's terms of service govern automated collection. Reddit and Bluesky provide
   official APIs for it; YouTube, TikTok, Instagram, and Facebook collection uses yt-dlp to
-  read public pages.
+  read public pages. Truth Social collection works only by imitating a browser to get past
+  its bot protection, which its terms likely prohibit; treat it as the highest-risk tab.
 - Posts can contain disturbing or illegal material. If you encounter content that sexualizes
   minors, stop, do not save or share it, and report it to your instructor and to NCMEC
   (<https://report.cybertip.org>).

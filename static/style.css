@@ -218,3 +218,7 @@ dialog input, dialog select { width: 100%; }
 .block { margin-bottom: 18px; }
 #optLang { min-width: 140px; }
 .mid { width: 170px; }
+.tos-warning { background: #3b1518; border: 1px solid #a33a41; border-left: 4px solid #ff4d4f; color: #f6d4d6; padding: 12px 16px; border-radius: 8px; margin: 0 0 16px; font-size: 14px; line-height: 1.5; }
+.tos-warning strong { color: #fff; }
+.site-row { margin-bottom: 12px; }
+.site-row a { color: var(--accent-2); font-size: 13px; }
