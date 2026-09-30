@@ -14,15 +14,22 @@ import secrets
 from pathlib import Path
 
 HOME_DIR = Path.home() / ".social_media_data_gathering"
-HOME_DIR.mkdir(exist_ok=True)
 
 CONFIG_PATH = HOME_DIR / "config.json"
 CACHE_DIR = HOME_DIR / "cache"
 MEDIA_DIR = HOME_DIR / "media"
 EXPORT_DIR = HOME_DIR / "exports"  # temporary; see module docstring
 LOG_PATH = HOME_DIR / "collection_log.jsonl"
-for d in (CACHE_DIR, MEDIA_DIR, EXPORT_DIR):
-    d.mkdir(exist_ok=True)
+
+
+def ensure_dirs() -> None:
+    """Create the app's folders. Called before every write, so the app recovers if
+    someone deletes the folder while it is running."""
+    for d in (HOME_DIR, CACHE_DIR, MEDIA_DIR, EXPORT_DIR):
+        d.mkdir(parents=True, exist_ok=True)
+
+
+ensure_dirs()
 
 DEFAULT_MODEL = "google/gemini-3.8-flash"
 
@@ -45,6 +52,7 @@ def _read() -> dict:
 
 
 def _write(cfg: dict) -> None:
+    ensure_dirs()
     CONFIG_PATH.write_text(json.dumps(cfg, indent=2), encoding="utf-8")
     try:
         os.chmod(CONFIG_PATH, 0o600)

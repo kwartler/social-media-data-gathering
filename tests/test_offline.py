@@ -149,3 +149,17 @@ def test_translation_fills_fields_and_keeps_originals(monkeypatch):
     assert post["translated_llm_transcript"] == "EN:A: buenos dias"
     assert com["translated_text"] == "EN:que bueno" and com["translation_language"] == "English"
     assert post["ai_generated"] is True and usage["cost"] == 0.001
+
+
+def test_recovers_when_hidden_folder_is_deleted_while_running():
+    import shutil
+    from smdg import config, pipeline
+    shutil.rmtree(config.HOME_DIR)
+    config.update({"model": "some/model"})  # settings save (was a 500 error)
+    assert config.get("model") == "some/model"
+    shutil.rmtree(config.HOME_DIR)
+    pipeline._log({"input": "x"})  # collection log
+    assert config.LOG_PATH.exists()
+    shutil.rmtree(config.HOME_DIR)
+    zp = pipeline.export("job", [], [], {}, {}, {"job_id": "job"}, {"pseudonymize": "none"})
+    assert zp.exists()

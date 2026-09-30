@@ -190,6 +190,7 @@ def _chat(body: dict, cache_key: str) -> dict:
     out = {"content": (choice.get("message") or {}).get("content") or "",
            "usage": data.get("usage") or {}, "model": data.get("model") or body["model"]}
     _parse_json(out["content"])  # only cache replies that parse
+    config.ensure_dirs()
     cache.write_text(json.dumps(out, ensure_ascii=False), encoding="utf-8")
     return out
 

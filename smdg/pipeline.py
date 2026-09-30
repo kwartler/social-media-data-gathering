@@ -15,7 +15,7 @@ from typing import Iterator
 from . import bluesky, classify, config, errors, llm, reddit, truthsocial, ytdlp_sites
 from .records import COLUMNS, SEGMENT_COLUMNS, TRANSLATABLE, now_iso, pseudonymize
 
-__version__ = "0.2.1"
+__version__ = "0.2.2"
 
 COLLECTORS = {
     "youtube": ytdlp_sites.collect,
@@ -169,6 +169,7 @@ def _apply_translation(result: dict, opts: dict) -> dict:
 
 
 def _log(entry: dict) -> None:
+    config.ensure_dirs()
     with open(config.LOG_PATH, "a", encoding="utf-8") as f:
         f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
@@ -296,6 +297,7 @@ def export(job_id: str, rows, segments, raws, timedtext, manifest, opts) -> Path
     for sg in segments:
         by_doc.setdefault(sg["doc_id"], []).append(sg)
     here = Path(__file__).parent
+    config.ensure_dirs()
     zip_path = config.EXPORT_DIR / f"social_media_corpus_{job_id}.zip"
     with zipfile.ZipFile(zip_path, "w", zipfile.ZIP_DEFLATED) as z:
         z.writestr("corpus.jsonl", "".join(
