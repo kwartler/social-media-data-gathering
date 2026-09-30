@@ -331,5 +331,5 @@ pyinstaller social_media_data_gathering.spec
 # Output: dist/social-media-data-gathering (or .exe on Windows)
 ```
 
-Pushing a tag such as `v0.1.0` builds Mac and Windows binaries on GitHub Actions and attaches
+Pushing a version tag (for example `v0.3.0`) builds Mac and Windows binaries on GitHub Actions and attaches
 them to a release.

@@ -41,10 +41,9 @@ key <- read.csv(key_file, encoding = "UTF-8", stringsAsFactors = FALSE, na.strin
 if (file.exists(names_file)) {
   pseudonyms <- read.csv(names_file, encoding = "UTF-8", stringsAsFactors = FALSE, na.strings = character(0))
 } else {
-  # Exports from app version 0.1.0 have no pseudonym key, so @mentions stay coded
-  message("Note: this export was made by an older version of the app (0.1.0). Authors and links ",
-          "will be restored, but @mentions inside the text cannot be. Re-collect with version 0.2.0 ",
-          "or later to restore mentions too.")
+  # Without the pseudonym key, @mentions inside the text stay coded
+  message("Note: this export has no identifiable/pseudonym_key.csv. Authors and links will be ",
+          "restored, but @mentions inside the text cannot be.")
   pseudonyms <- data.frame(pseudonym = character(0), original = character(0))
 }
 

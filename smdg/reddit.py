@@ -16,9 +16,14 @@ from . import config
 from .records import iso_from_epoch, new_row
 
 API = "https://oauth.reddit.com"
-UA = "python:social-media-data-gathering:v0.1 (academic research tool)"
+UA = "python:social-media-data-gathering:{version} (academic research tool)"
 
 _token: dict = {}
+
+
+def _ua() -> str:
+    from .pipeline import __version__  # imported late: pipeline imports this module
+    return UA.format(version=f"v{__version__}")
 
 
 def _auth() -> str:
@@ -29,7 +34,7 @@ def _auth() -> str:
         raise PermissionError("Reddit needs an API client ID and secret (Reddit blocks anonymous access). "
                               "Add them in Settings; the README explains how to get them.")
     r = httpx.post("https://www.reddit.com/api/v1/access_token", auth=(cid, secret),
-                   data={"grant_type": "client_credentials"}, headers={"User-Agent": UA}, timeout=30)
+                   data={"grant_type": "client_credentials"}, headers={"User-Agent": _ua()}, timeout=30)
     if r.status_code == 401:
         raise PermissionError("Reddit rejected the client ID or secret. Check them in Settings.")
     r.raise_for_status()
@@ -42,7 +47,7 @@ def _auth() -> str:
 
 def _get(path: str, params: dict | None = None):
     r = httpx.get(f"{API}{path}", params={"raw_json": 1, **(params or {})},
-                  headers={"User-Agent": UA, "Authorization": f"bearer {_auth()}"}, timeout=30)
+                  headers={"User-Agent": _ua(), "Authorization": f"bearer {_auth()}"}, timeout=30)
     if r.status_code == 404:
         raise LookupError("Reddit returned 404: the post, subreddit, or user does not exist or was removed.")
     if r.status_code == 403:
@@ -54,7 +59,7 @@ def _get(path: str, params: dict | None = None):
 
 
 def _resolve_share(url: str) -> str:
-    r = httpx.get(url, headers={"User-Agent": UA}, follow_redirects=False, timeout=30)
+    r = httpx.get(url, headers={"User-Agent": _ua()}, follow_redirects=False, timeout=30)
     loc = r.headers.get("location") or ""
     if "/comments/" not in loc:
         raise ValueError("Could not resolve this Reddit share link. Open it in a browser and paste the full post URL.")
@@ -148,7 +153,7 @@ def collect(target: dict, opts: dict) -> dict:
             return ("video", files[:1]) if files else None
         files = []
         for i, u in enumerate(urls):
-            r = httpx.get(u, timeout=60, headers={"User-Agent": UA}, follow_redirects=True)
+            r = httpx.get(u, timeout=60, headers={"User-Agent": _ua()}, follow_redirects=True)
             r.raise_for_status()
             p = out / f"image_{i + 1:02d}.jpg"
             p.write_bytes(r.content)
