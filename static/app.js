@@ -213,6 +213,7 @@ function switchTab(tab) {
   $("#optPseudo").value = s.pseudo;
   $("#optIdent").checked = s.ident;
   updateIdentLabel();
+  updatePseudoHint();
 
   show($("#accountBlock"), !!p.account);
   if (p.account) {
@@ -256,7 +257,7 @@ function updateModelOptions() {
   const translating = !!$("#optTranslate").value.trim();
   show($("#optMaxWrap"), on);
   show($("#optKeepWrap"), on);
-  show($("#modelLine"), on || translating);
+  show($("#optModelWrap"), on || translating);
   show($("#optLangWrap"), PLATFORMS[active]?.captions && !(active === "youtube" && $("#optYtSource").value === "model"));
   updateBanner();
 }
@@ -503,7 +504,7 @@ function options() {
     pseudonymize: $("#optPseudo").value,
     include_identifiable: $("#optIdent").checked,
     keep_media: usesModel() && $("#optKeep").checked,
-    model: settings.model,
+    model: $("#optModel").value || settings.model,
   };
 }
 
@@ -587,31 +588,59 @@ function updateBanner() {
 
 async function loadSettings() {
   settings = await fetch("/api/settings").then(r => r.json());
-  $("#modelName").textContent = settings.model;
   show($("#keyDot"), !!settings.openrouter_api_key);
-  $("#settingsBtn").title = settings.openrouter_api_key ? "Settings (OpenRouter key is set)" : "API keys and model";
+  $("#settingsBtn").title = settings.openrouter_api_key ? "Settings (OpenRouter key is set)" : "API keys";
   $("#dataDir").textContent = settings.data_dir;
   updateBanner();
 }
 
+// Model choices live in Collection options; the choice is saved as a setting
+let modelChoices = [];
 async function loadModels() {
-  const sel = $("#sModel");
-  sel.innerHTML = `<option>Loading models...</option>`;
+  const sel = $("#optModel");
   try {
-    const data = await fetch("/api/models").then(r => r.json());
-    sel.innerHTML = "";
-    if (!data.models.some(m => m.id === settings.model)) data.models.unshift({ id: settings.model });
-    for (const m of data.models) {
-      const o = document.createElement("option");
-      o.value = m.id;
-      o.textContent = m.id + (m.prompt_per_million != null ? `  ($${m.prompt_per_million.toFixed(2)}/M)` : "");
-      sel.appendChild(o);
-    }
-    sel.value = settings.model;
+    modelChoices = (await fetch("/api/models").then(r => r.json())).models || [];
   } catch {
-    sel.innerHTML = `<option value="${escapeHtml(settings.model)}">${escapeHtml(settings.model)}</option>`;
+    modelChoices = [{ id: settings.model, label: settings.model }];
   }
+  sel.innerHTML = "";
+  for (const m of modelChoices) {
+    const o = document.createElement("option");
+    o.value = m.id;
+    o.textContent = m.label;
+    sel.appendChild(o);
+  }
+  sel.value = settings.model;
+  updateModelHint();
 }
+
+function updateModelHint() {
+  const m = modelChoices.find(x => x.id === $("#optModel").value);
+  const price = m && m.prompt_per_million != null
+    ? `$${m.prompt_per_million.toFixed(2)} in / $${m.completion_per_million.toFixed(2)} out per million tokens. ` : "";
+  $("#modelHint").textContent = price + "Always the newest version; the exact model is recorded in llm_model.";
+}
+
+$("#optModel").addEventListener("change", async () => {
+  updateModelHint();
+  try {
+    await postJSON("/api/settings", { model: $("#optModel").value });
+    settings.model = $("#optModel").value;
+  } catch (err) {
+    setStatus(err.message, true);
+  }
+});
+
+// Plain-language description of the selected pseudonymization mode
+const PSEUDO_HINTS = {
+  commenters: "Keeps the names of the accounts you collect from; replaces commenters and anyone @mentioned with codes.",
+  everyone: "Replaces every name with a code, including post authors.",
+  none: "Keeps all names exactly as collected.",
+};
+function updatePseudoHint() {
+  $("#pseudoHint").textContent = PSEUDO_HINTS[$("#optPseudo").value] || "";
+}
+$("#optPseudo").addEventListener("change", updatePseudoHint);
 
 function openSettings() {
   $("#sOpenrouter").value = "";
@@ -624,7 +653,6 @@ function openSettings() {
   $("#sBskyPw").placeholder = settings.bluesky_app_password ? "saved (leave blank to keep)" : "xxxx-xxxx-xxxx-xxxx";
   $("#settingsStatus").textContent = "";
   $("#settingsDlg").showModal();
-  loadModels();
 }
 
 $("#settingsBtn").addEventListener("click", openSettings);
@@ -632,7 +660,6 @@ $("#settingsBtn").addEventListener("click", openSettings);
 $("#settingsSave").addEventListener("click", async (e) => {
   e.preventDefault();
   const body = {
-    model: $("#sModel").value,
     reddit_client_id: $("#sRedditId").value.trim(),
     bluesky_handle: $("#sBskyHandle").value.trim(),
   };
@@ -651,4 +678,4 @@ $("#settingsSave").addEventListener("click", async (e) => {
 
 buildTabs();
 buildSites();
-loadSettings().then(() => switchTab("youtube"));
+loadSettings().then(() => { loadModels(); switchTab("youtube"); });

@@ -73,13 +73,18 @@ def search(platform: str, query: str, limit: int, sort: str = "latest", subreddi
         raise ValueError(f"Search is not available for {platform}.")
 
 
+def _model(opts: dict) -> str:
+    allowed = {m["id"] for m in config.MODEL_CHOICES}
+    return opts.get("model") if opts.get("model") in allowed else config.model()
+
+
 def _apply_llm(result: dict, opts: dict) -> dict:
     """Fill model-extracted columns on the post row. Returns usage info for the manifest."""
     post = result["rows"][0]
     fetch = result.get("fetch_media")
     if not opts.get("llm") or not fetch:
         return {}
-    model = opts.get("model") or config.DEFAULT_MODEL
+    model = _model(opts)
     if not config.get("openrouter_api_key"):
         post["llm_error"] = "No OpenRouter API key set, so model extraction was skipped. Add one in Settings."
         return {}
@@ -134,7 +139,7 @@ def _apply_translation(result: dict, opts: dict) -> dict:
         rows[0]["llm_error"] = (rows[0]["llm_error"] + " " if rows[0]["llm_error"] else "") + \
             "No OpenRouter API key set, so translation was skipped."
         return {}
-    model = opts.get("model") or config.DEFAULT_MODEL
+    model = _model(opts)
     # One request per chunk of {row index|field: text}
     pending, chunks, size = {}, [], 0
     for i, r in enumerate(rows):

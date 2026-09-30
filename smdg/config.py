@@ -31,7 +31,14 @@ def ensure_dirs() -> None:
 
 ensure_dirs()
 
-DEFAULT_MODEL = "google/gemini-3.8-flash"
+# OpenRouter "latest" aliases always point at the newest model in a family, so the
+# app keeps working when individual versions are retired. Only these two aliases
+# accept both video and audio. The exact model used is recorded in llm_model.
+MODEL_CHOICES = [
+    {"id": "~google/gemini-flash-latest", "label": "Gemini Flash, latest (recommended)"},
+    {"id": "~google/gemini-pro-latest", "label": "Gemini Pro, latest (more accurate, costs more)"},
+]
+DEFAULT_MODEL = MODEL_CHOICES[0]["id"]
 
 # Setting name -> environment variable that overrides it
 ENV_OVERRIDES = {
@@ -80,13 +87,19 @@ def update(values: dict) -> None:
     _write(cfg)
 
 
+def model() -> str:
+    """The chosen model, falling back to the default if a saved choice is no longer offered."""
+    saved = get("model", DEFAULT_MODEL)
+    return saved if saved in {m["id"] for m in MODEL_CHOICES} else DEFAULT_MODEL
+
+
 def public_view() -> dict:
     """Settings safe to send to the browser: secrets become booleans."""
     out = {}
     for name in ENV_OVERRIDES:
         val = get(name)
         out[name] = bool(val) if name in SECRET_KEYS else val
-    out["model"] = get("model", DEFAULT_MODEL)
+    out["model"] = model()
     out["data_dir"] = str(HOME_DIR)
     return out
 

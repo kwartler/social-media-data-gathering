@@ -83,37 +83,70 @@
       <section id="optionsCard" class="card">
         <h3>Collection options</h3>
         <div class="opts">
-          <label id="optYtSourceWrap">Transcript source
-            <select id="optYtSource">
-              <option value="captions">YouTube captions (timedtext API)</option>
-              <option value="model">Model (downloads the video)</option>
-              <option value="both">Both, side by side</option>
-            </select></label>
-          <label id="optLlmWrap"><input type="checkbox" id="optLlm" checked> Extract text from video and images with the model
-            <span class="muted small">(dialog transcript, on-screen text, visual description)</span></label>
-          <label id="optMaxWrap">Max video length for the model <input id="optMaxSecs" type="number" min="10" max="3600" value="300"> seconds</label>
-          <label id="optLangWrap">Caption language
-            <select id="optLang"></select></label>
-          <label>Translate to
-            <input id="optTranslate" type="text" list="translateLangs" placeholder="Off" class="mid">
-            <span class="muted small">Adds translated fields; originals are kept.</span></label>
-          <datalist id="translateLangs">
-            <option value="English"><option value="Spanish"><option value="French"><option value="German">
-            <option value="Portuguese"><option value="Italian"><option value="Chinese (Simplified)"><option value="Japanese">
-            <option value="Korean"><option value="Arabic"><option value="Hindi"><option value="Russian">
-          </datalist>
-          <label id="optCommentsWrap">Comments per post <input id="optComments" type="number" min="0" max="500" value="0"></label>
-          <label>Pseudonymize
-            <select id="optPseudo">
-              <option value="commenters">Commenters and @mentions only (keep post authors)</option>
-              <option value="everyone">Everyone, including post authors</option>
-              <option value="none">No one</option>
-            </select></label>
-          <label><input type="checkbox" id="optIdent" checked> <span id="optIdentText">Include identifiable folder (linking key, raw data)</span></label>
-          <label id="optKeepWrap"><input type="checkbox" id="optKeep"> Keep downloaded media files</label>
+          <fieldset class="opt-group">
+            <legend>Text extraction</legend>
+            <div class="field" id="optYtSourceWrap">
+              <label for="optYtSource">Transcript source</label>
+              <select id="optYtSource">
+                <option value="captions">YouTube captions (timedtext API)</option>
+                <option value="model">Model (downloads the video)</option>
+                <option value="both">Both, side by side</option>
+              </select>
+            </div>
+            <label class="check" id="optLlmWrap"><input type="checkbox" id="optLlm" checked>
+              <span>Extract text from video and images with the model
+                <span class="hint">Speaker-labeled transcript, on-screen text, visual description</span></span></label>
+            <div class="field" id="optModelWrap">
+              <label for="optModel">Model</label>
+              <select id="optModel"></select>
+              <span class="hint" id="modelHint"></span>
+            </div>
+            <div class="field" id="optMaxWrap">
+              <label for="optMaxSecs">Max video length for the model (seconds)</label>
+              <input id="optMaxSecs" type="number" min="10" max="3600" value="300">
+            </div>
+            <div class="field" id="optLangWrap">
+              <label for="optLang">Caption language</label>
+              <select id="optLang"></select>
+            </div>
+          </fieldset>
+
+          <fieldset class="opt-group">
+            <legend>Comments and translation</legend>
+            <div class="field" id="optCommentsWrap">
+              <label for="optComments">Comments per post</label>
+              <input id="optComments" type="number" min="0" max="500" value="0">
+            </div>
+            <div class="field">
+              <label for="optTranslate">Translate to</label>
+              <input id="optTranslate" type="text" list="translateLangs" placeholder="Off (type or pick a language)">
+              <span class="hint">Adds translated fields; originals are kept.</span>
+            </div>
+            <datalist id="translateLangs">
+              <option value="English"><option value="Spanish"><option value="French"><option value="German">
+              <option value="Portuguese"><option value="Italian"><option value="Chinese (Simplified)"><option value="Japanese">
+              <option value="Korean"><option value="Arabic"><option value="Hindi"><option value="Russian">
+            </datalist>
+          </fieldset>
+
+          <fieldset class="opt-group">
+            <legend>Privacy and storage</legend>
+            <div class="field">
+              <label for="optPseudo">Pseudonymize</label>
+              <select id="optPseudo">
+                <option value="commenters">Commenters and @mentions only</option>
+                <option value="everyone">Everyone</option>
+                <option value="none">No one</option>
+              </select>
+              <span class="hint" id="pseudoHint"></span>
+            </div>
+            <label class="check"><input type="checkbox" id="optIdent" checked>
+              <span id="optIdentText">Include identifiable folder (linking key, raw data)</span></label>
+            <label class="check" id="optKeepWrap"><input type="checkbox" id="optKeep">
+              <span>Keep downloaded media files</span></label>
+          </fieldset>
         </div>
-        <div class="row between">
-          <span class="muted small" id="modelLine">Model: <code id="modelName"></code></span>
+        <div class="run-row">
           <button id="runBtn" class="primary">Collect</button>
         </div>
       </section>
@@ -149,10 +182,7 @@
 
       <h3>OpenRouter <span class="muted small">(TikTok, Instagram, Facebook, and media on Reddit and Bluesky)</span></h3>
       <label>API key <input type="password" id="sOpenrouter" placeholder="sk-or-..." autocomplete="off"></label>
-      <label>Model
-        <select id="sModel"></select>
-      </label>
-      <p class="muted small">Only models that accept video are listed. Price is per million input tokens.</p>
+      <p class="muted small">Choose the model under Collection options.</p>
 
       <h3>Reddit <span class="muted small">(required for Reddit)</span></h3>
       <label>Client ID <input type="text" id="sRedditId" autocomplete="off"></label>

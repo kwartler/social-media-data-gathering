@@ -110,23 +110,22 @@ def prompt_record() -> dict:
 
 
 def list_models() -> list[dict]:
-    """Models on OpenRouter that accept video input (they all accept images too)."""
-    r = httpx.get(f"{API}/models", timeout=30)
-    r.raise_for_status()
-    out = []
-    for m in r.json().get("data", []):
-        mods = (m.get("architecture") or {}).get("input_modalities") or []
-        if "video" not in mods or "image" not in mods or m["id"].endswith(":batch"):
-            continue
-        price = (m.get("pricing") or {}).get("prompt")
-        try:
-            per_m = float(price) * 1_000_000
-        except (TypeError, ValueError):
-            per_m = None
-        out.append({"id": m["id"], "name": m.get("name") or m["id"],
-                    "prompt_per_million": per_m if per_m is not None and per_m >= 0 else None})
-    out.sort(key=lambda x: x["id"])
-    return out
+    """The curated model choices, with current prices from OpenRouter when reachable."""
+    prices = {}
+    try:
+        r = httpx.get(f"{API}/models", timeout=30)
+        r.raise_for_status()
+        for m in r.json().get("data", []):
+            p = (m.get("pricing") or {})
+            try:
+                prices[m["id"]] = (float(p.get("prompt")) * 1_000_000, float(p.get("completion")) * 1_000_000)
+            except (TypeError, ValueError):
+                pass
+    except httpx.HTTPError:
+        pass  # offline: still offer the choices, just without prices
+    return [{**c, "prompt_per_million": prices.get(c["id"], (None, None))[0],
+             "completion_per_million": prices.get(c["id"], (None, None))[1]}
+            for c in config.MODEL_CHOICES]
 
 
 def _data_url(path: Path) -> str:
