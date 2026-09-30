@@ -33,7 +33,7 @@ def resource_path(rel: str) -> Path:
 
 
 STATIC_DIR = resource_path("static")
-PORT = 8010
+PORT = int(os.environ.get("SMDG_PORT", "8010"))  # override only to run a second copy for testing
 
 app = FastAPI(title="Social Media Data Gathering")
 
@@ -252,6 +252,8 @@ def main():
         except (EOFError, KeyboardInterrupt):
             pass
         return
+
+    config.clear_temp_exports()
 
     # Auto-update yt-dlp in the background (no-op when running as a frozen binary)
     if not getattr(sys, "frozen", False):

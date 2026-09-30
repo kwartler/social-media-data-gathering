@@ -15,7 +15,7 @@ from typing import Iterator
 from . import bluesky, classify, config, errors, llm, reddit, truthsocial, ytdlp_sites
 from .records import COLUMNS, SEGMENT_COLUMNS, TRANSLATABLE, now_iso, pseudonymize
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"
 
 COLLECTORS = {
     "youtube": ytdlp_sites.collect,

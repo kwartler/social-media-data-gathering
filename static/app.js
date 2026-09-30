@@ -540,7 +540,13 @@ $("#runBtn").addEventListener("click", async () => {
           + (ev.cost ? `, model cost $${ev.cost.toFixed(4)}` : "");
         const a = $("#zipLink");
         a.href = `/api/exports/${encodeURIComponent(ev.zip)}`;
+        a.setAttribute("download", ev.zip);
         show(a, true);
+        // Like YT Timed Text: the browser saves the file to the Downloads folder
+        if (ev.n_docs) {
+          a.click();
+          setStatus(`Saved ${ev.zip} to your Downloads folder.`);
+        }
       } else if (ev.event === "error") {
         setStatus(ev.error, true);
       }

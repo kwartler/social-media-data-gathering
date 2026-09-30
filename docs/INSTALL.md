@@ -142,9 +142,11 @@ computer and to the websites you collect from, so you can click **Cancel** or al
   type that address yourself.
 - When you're done, click **Quit** at the top right of the app's page. Then close the
   browser tab. Closing the black window also stops the app.
-- Your settings, keys, and exports are saved in a folder in your home directory named
-  `.social_media_data_gathering` (hidden by default). See
-  [Where data is stored](../README.md#where-data-is-stored).
+- When a collection finishes, your corpus zip downloads to your **Downloads** folder
+  automatically, just like any file you download in the browser. That's the file you open
+  in R. The app keeps no other copy, so move it wherever you keep your project data.
+- Your settings and API keys are saved in a hidden folder the app manages for you; you never
+  need to open it. See [Where data is stored](../README.md#where-data-is-stored).
 
 ---
 
@@ -172,11 +174,11 @@ Check **Protection history** in Windows Security (see above); antivirus may have
 
 ## Removing the app when you're done
 
-Removing the app takes two parts: the app itself, and the folder where it keeps your
-settings, API keys, collected data, and log.
+Removing the app takes three parts: the app itself, the hidden folder where it keeps your
+settings, API keys, and log, and the corpus zips you downloaded.
 
-**Before you delete anything:** the data folder holds your exports, including any
-`identifiable` folders and `corpus_identified.csv` files with real names. Your IRB protocol
+**Before you delete anything:** your corpus zips (in Downloads, or wherever you moved them)
+and any `_identified` folders from the R scripts may contain real names. Your IRB protocol
 or course policy may say how long to keep research data and how to destroy it. Copy
 anything you must keep to its approved location first; then delete the rest.
 
@@ -212,8 +214,9 @@ anything you must keep to its approved location first; then delete the rest.
 
 ### Also clean up
 
-- **Exports you moved elsewhere:** zip files and `_identified` folders you copied out of the
-  app's folder aren't removed by the steps above. Delete them according to your protocol.
+- **Your corpus zips:** files named `social_media_corpus_...zip` in Downloads (or wherever you
+  moved them), plus any `_identified` folders and `review_sheet.csv` files the R scripts
+  made next to them. Delete them according to your protocol.
 - **R model cache:** if you ran `examples/starter_analysis.R`, it downloaded a language model
   for parsing. Remove it by running this in R:
   ```

@@ -224,7 +224,7 @@ document-term matrix with **tm**, dependency parsing with **udpipe**, and an **L
 classifier through OpenRouter.
 
 ```bash
-Rscript examples/starter_analysis.R ~/.social_media_data_gathering/exports/social_media_corpus_XXXX.zip
+Rscript examples/starter_analysis.R ~/Downloads/social_media_corpus_XXXX.zip
 ```
 
 ---
@@ -281,16 +281,23 @@ discussion prompts covering the points below.
 
 ## Where data is stored
 
-Everything lives in `~/.social_media_data_gathering/`:
+**Your corpus zips go to your Downloads folder**, the same way YT Timed Text saves its JSON.
+When a collection finishes, the browser downloads `social_media_corpus_<date>_<id>.zip`
+automatically; **Download again** fetches it a second time if needed. Move the zips wherever
+your project keeps its data. The R scripts save their output next to whichever zip you pick.
 
-- `exports/`: every zip you've created.
-- `collection_log.jsonl`: the collection log.
-- `cache/`: model results, so re-running the same media with the same model is free.
-- `media/`: temporary downloads (emptied after extraction unless you keep media).
+The app doesn't keep its own copy of your zips. It has one hidden folder,
+`~/.social_media_data_gathering/`, for its own files, which you never need to open:
+
 - `config.json`: your keys and the pseudonymization salt. Keep the salt if you want pseudonyms
   to stay the same across collections.
+- `collection_log.jsonl`: the collection log shown on the Log tab.
+- `cache/`: model results, so re-running the same media with the same model is free.
+- `media/`: temporary video and image downloads (emptied after extraction unless you keep media).
+- `exports/`: holds each zip only until your browser has downloaded it; emptied every time
+  the app starts.
 
-To uninstall, including deleting this folder and revoking your keys, see
+To uninstall, including deleting that folder and revoking your keys, see
 [Removing the app when you're done](docs/INSTALL.md#removing-the-app-when-youre-done).
 
 ## Troubleshooting

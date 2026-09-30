@@ -1,7 +1,10 @@
-"""Local settings: data folder, API keys, and the pseudonymization salt.
+"""Local settings: API keys, the pseudonymization salt, the log, and caches.
 
-Everything lives in ~/.social_media_data_gathering/. Keys can also come from
-environment variables, which take precedence over the saved file.
+These live in ~/.social_media_data_gathering/, which students never need to
+open. Corpus zips are not kept here: like YT Timed Text, each one is handed to
+the browser and lands in the Downloads folder. exports/ only holds them until
+the browser has fetched them, and is emptied each time the app starts.
+Keys can also come from environment variables, which override the saved file.
 """
 from __future__ import annotations
 
@@ -16,7 +19,7 @@ HOME_DIR.mkdir(exist_ok=True)
 CONFIG_PATH = HOME_DIR / "config.json"
 CACHE_DIR = HOME_DIR / "cache"
 MEDIA_DIR = HOME_DIR / "media"
-EXPORT_DIR = HOME_DIR / "exports"
+EXPORT_DIR = HOME_DIR / "exports"  # temporary; see module docstring
 LOG_PATH = HOME_DIR / "collection_log.jsonl"
 for d in (CACHE_DIR, MEDIA_DIR, EXPORT_DIR):
     d.mkdir(exist_ok=True)
@@ -78,6 +81,12 @@ def public_view() -> dict:
     out["model"] = get("model", DEFAULT_MODEL)
     out["data_dir"] = str(HOME_DIR)
     return out
+
+
+def clear_temp_exports() -> None:
+    """Delete zips left from earlier sessions; the browser already saved them to Downloads."""
+    for f in EXPORT_DIR.glob("*.zip"):
+        f.unlink(missing_ok=True)
 
 
 def salt() -> str:
