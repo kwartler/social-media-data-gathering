@@ -588,6 +588,8 @@ function updateBanner() {
 async function loadSettings() {
   settings = await fetch("/api/settings").then(r => r.json());
   $("#modelName").textContent = settings.model;
+  show($("#keyDot"), !!settings.openrouter_api_key);
+  $("#settingsBtn").title = settings.openrouter_api_key ? "Settings (OpenRouter key is set)" : "API keys and model";
   $("#dataDir").textContent = settings.data_dir;
   updateBanner();
 }
