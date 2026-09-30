@@ -100,25 +100,15 @@ Notes:
 
 #### First-launch security warnings
 
-The binaries are not code-signed, so your OS warns you the first time.
+The app isn't signed with a paid Apple or Microsoft certificate, so your computer warns you
+the first time you open it. **Step-by-step instructions for Mac and Windows, with
+troubleshooting, are in [docs/INSTALL.md](docs/INSTALL.md).** In short:
 
-**Mac:** "social-media-data-gathering can't be opened because Apple cannot check it for
-malicious software." This appears because the app isn't signed with a paid Apple Developer
-certificate. To open it anyway (once per download):
+- **Mac:** click **Done** on the warning, then **System Settings > Privacy & Security >
+  Open Anyway**.
+- **Windows:** on the blue SmartScreen window, click **More info**, then **Run anyway**.
 
-1. Click **Done** (not Move to Trash).
-2. Open **System Settings > Privacy & Security**, scroll down to **Security**, and click
-   **Open Anyway** next to the message about social-media-data-gathering.
-3. Confirm with your password or Touch ID, then click **Open**.
-
-Or clear the quarantine flag in Terminal, then double-click normally:
-```
-xattr -dr com.apple.quarantine ~/Downloads/social-media-data-gathering.app
-```
-(Change the path if you unzipped the app somewhere other than Downloads.)
-
-**Windows:** "Windows protected your PC" (SmartScreen).
-- Click **More info**, then **Run anyway**.
+You only do this once per download.
 
 ### Run from source
 
