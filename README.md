@@ -102,12 +102,20 @@ Notes:
 
 The binaries are not code-signed, so your OS warns you the first time.
 
-**Mac:** "cannot be opened because it is from an unidentified developer."
-- Right-click the app, choose **Open**, then click **Open** in the dialog.
-- Or clear the quarantine flag in Terminal, then double-click normally:
-  ```
-  xattr -dr com.apple.quarantine ~/Downloads/social-media-data-gathering.app
-  ```
+**Mac:** "social-media-data-gathering can't be opened because Apple cannot check it for
+malicious software." This appears because the app isn't signed with a paid Apple Developer
+certificate. To open it anyway (once per download):
+
+1. Click **Done** (not Move to Trash).
+2. Open **System Settings > Privacy & Security**, scroll down to **Security**, and click
+   **Open Anyway** next to the message about social-media-data-gathering.
+3. Confirm with your password or Touch ID, then click **Open**.
+
+Or clear the quarantine flag in Terminal, then double-click normally:
+```
+xattr -dr com.apple.quarantine ~/Downloads/social-media-data-gathering.app
+```
+(Change the path if you unzipped the app somewhere other than Downloads.)
 
 **Windows:** "Windows protected your PC" (SmartScreen).
 - Click **More info**, then **Run anyway**.
