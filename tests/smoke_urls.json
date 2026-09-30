@@ -1,46 +1,215 @@
 {
   "_about": "Real example inputs for each tab, used by scripts/smoke_test.py. Each was verified to work when added. Posts can be deleted over time; replace any that start failing with a similar public post.",
   "collect": [
-    {"tab": "youtube", "name": "YouTube video (captions)", "input": "https://www.youtube.com/watch?v=jNQXAC9IVRw", "options": {"comments": 2}, "expect": {"caption_source": "manual", "min_docs": 2}},
-    {"tab": "youtube", "name": "YouTube Short", "input": "https://www.youtube.com/shorts/tPEE9ZwTmy0"},
-    {"tab": "tiktok", "name": "TikTok video", "input": "https://www.tiktok.com/@scout2015/video/6718335390845095173"},
-    {"tab": "instagram", "name": "Instagram reel", "input": "https://www.instagram.com/reel/Chunk8-jurw/"},
-    {"tab": "instagram", "name": "Instagram post (carousel)", "input": "https://www.instagram.com/p/BQ0eAlwhDrw/"},
-    {"tab": "facebook", "name": "Facebook video", "input": "https://www.facebook.com/watch/?v=10153231379946729"},
-    {"tab": "bluesky", "name": "Bluesky post with replies", "input": "https://bsky.app/profile/bsky.app/post/3mw2cdr44fc2a", "options": {"comments": 2}, "expect": {"min_docs": 2}},
-    {"tab": "truthsocial", "name": "Truth Social text post", "input": "https://truthsocial.com/@realDonaldTrump/posts/117342927581199006"},
-    {"tab": "other", "name": "Rumble video", "input": "https://rumble.com/vdmum1-moose-the-dog-helps-girls-dig-a-snow-fort.html"},
-    {"tab": "other", "name": "BitChute video", "input": "https://www.bitchute.com/video/UGlrF9o9b-Q/"},
-    {"tab": "other", "name": "Odysee video", "input": "https://odysee.com/@gardeningincanada:b/plants-i-will-never-grow-again.-the:e"},
-    {"tab": "other", "name": "Dailymotion video", "input": "https://www.dailymotion.com/video/x5kesuj"},
-    {"tab": "other", "name": "Twitch clip", "input": "https://clips.twitch.tv/FaintLightGullWholeWheat"},
-    {"tab": "other", "name": "Bilibili video", "input": "https://www.bilibili.com/video/BV13x41117TL"}
+    {
+      "tab": "youtube",
+      "name": "YouTube video (captions)",
+      "input": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      "options": {
+        "comments": 2
+      },
+      "expect": {
+        "caption_source": "manual",
+        "min_docs": 2
+      }
+    },
+    {
+      "tab": "youtube",
+      "name": "YouTube Short",
+      "input": "https://www.youtube.com/shorts/tPEE9ZwTmy0"
+    },
+    {
+      "tab": "tiktok",
+      "name": "TikTok video",
+      "input": "https://www.tiktok.com/@scout2015/video/6718335390845095173"
+    },
+    {
+      "tab": "instagram",
+      "name": "Instagram reel",
+      "input": "https://www.instagram.com/reel/Chunk8-jurw/"
+    },
+    {
+      "tab": "instagram",
+      "name": "Instagram post (carousel)",
+      "input": "https://www.instagram.com/p/BQ0eAlwhDrw/"
+    },
+    {
+      "tab": "facebook",
+      "name": "Facebook video",
+      "input": "https://www.facebook.com/watch/?v=10153231379946729"
+    },
+    {
+      "tab": "bluesky",
+      "name": "Bluesky post with replies",
+      "input": "https://bsky.app/profile/bsky.app/post/3mw2cdr44fc2a",
+      "options": {
+        "comments": 2
+      },
+      "expect": {
+        "min_docs": 2
+      }
+    },
+    {
+      "tab": "truthsocial",
+      "name": "Truth Social text post",
+      "input": "https://truthsocial.com/@realDonaldTrump/posts/117342927581199006"
+    },
+    {
+      "tab": "other",
+      "name": "Rumble video",
+      "input": "https://rumble.com/vdmum1-moose-the-dog-helps-girls-dig-a-snow-fort.html"
+    },
+    {
+      "tab": "other",
+      "name": "BitChute video",
+      "input": "https://www.bitchute.com/video/UGlrF9o9b-Q/"
+    },
+    {
+      "tab": "other",
+      "name": "Odysee video",
+      "input": "https://odysee.com/@gardeningincanada:b/plants-i-will-never-grow-again.-the:e"
+    },
+    {
+      "tab": "other",
+      "name": "Dailymotion video",
+      "input": "https://www.dailymotion.com/video/x5kesuj"
+    },
+    {
+      "tab": "other",
+      "name": "Twitch clip",
+      "input": "https://clips.twitch.tv/FaintLightGullWholeWheat"
+    },
+    {
+      "tab": "other",
+      "name": "Bilibili video",
+      "input": "https://www.bilibili.com/video/BV13x41117TL"
+    }
   ],
   "model": [
-    {"tab": "tiktok", "name": "TikTok video through the model", "input": "https://www.tiktok.com/@scout2015/video/6718335390845095173", "expect": {"visual_description": true}},
-    {"tab": "youtube", "name": "YouTube video through the model (Both)", "input": "https://www.youtube.com/watch?v=jNQXAC9IVRw", "options": {"youtube_source": "both"}, "expect": {"visual_description": true, "llm_transcript": true, "caption_source": "manual"}},
-    {"tab": "truthsocial", "name": "Truth Social image post through the model", "input": "https://truthsocial.com/@realDonaldTrump/117346090177597599", "expect": {"visual_description": true}}
+    {
+      "tab": "tiktok",
+      "name": "TikTok video through the model",
+      "input": "https://www.tiktok.com/@scout2015/video/6718335390845095173",
+      "expect": {
+        "visual_description": true
+      }
+    },
+    {
+      "tab": "youtube",
+      "name": "YouTube video through the model (Both)",
+      "input": "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+      "options": {
+        "youtube_source": "both"
+      },
+      "expect": {
+        "visual_description": true,
+        "llm_transcript": true,
+        "caption_source": "manual"
+      }
+    },
+    {
+      "tab": "truthsocial",
+      "name": "Truth Social image post through the model",
+      "input": "https://truthsocial.com/@realDonaldTrump/117346090177597599",
+      "expect": {
+        "visual_description": true
+      }
+    }
   ],
   "list": [
-    {"tab": "youtube", "name": "YouTube channel", "input": "https://www.youtube.com/@jawed", "limit": 3},
-    {"tab": "tiktok", "name": "TikTok profile", "input": "tiktok:@misscarolineflett", "limit": 3},
-    {"tab": "tiktok", "name": "TikTok profile (second account)", "input": "https://www.tiktok.com/@scout2015", "limit": 3},
-    {"tab": "bluesky", "name": "Bluesky profile", "input": "bsky:bsky.app", "limit": 3},
-    {"tab": "truthsocial", "name": "Truth Social account", "input": "truth:@realDonaldTrump", "limit": 3},
-    {"tab": "reddit", "name": "Subreddit (needs Reddit key)", "input": "reddit:r/LanguageTechnology", "limit": 3, "requires": "reddit"}
+    {
+      "tab": "youtube",
+      "name": "YouTube channel",
+      "input": "https://www.youtube.com/@jawed",
+      "limit": 3
+    },
+    {
+      "tab": "tiktok",
+      "name": "TikTok profile",
+      "input": "tiktok:@misscarolineflett",
+      "limit": 3,
+      "best_effort": true
+    },
+    {
+      "tab": "tiktok",
+      "name": "TikTok profile (second account)",
+      "input": "https://www.tiktok.com/@scout2015",
+      "limit": 3,
+      "best_effort": true
+    },
+    {
+      "tab": "bluesky",
+      "name": "Bluesky profile",
+      "input": "bsky:bsky.app",
+      "limit": 3
+    },
+    {
+      "tab": "truthsocial",
+      "name": "Truth Social account",
+      "input": "truth:@realDonaldTrump",
+      "limit": 3
+    },
+    {
+      "tab": "reddit",
+      "name": "Subreddit (needs Reddit key)",
+      "input": "reddit:r/LanguageTechnology",
+      "limit": 3,
+      "requires": "reddit"
+    }
   ],
   "search": [
-    {"tab": "youtube", "name": "YouTube search", "platform": "youtube", "query": "me at the zoo", "limit": 3},
-    {"tab": "bluesky", "name": "Bluesky search (needs app password)", "platform": "bluesky", "query": "nlp", "limit": 3, "requires": "bluesky"},
-    {"tab": "reddit", "name": "Reddit search (needs Reddit key)", "platform": "reddit", "query": "text mining", "limit": 3, "requires": "reddit"}
+    {
+      "tab": "youtube",
+      "name": "YouTube search",
+      "platform": "youtube",
+      "query": "me at the zoo",
+      "limit": 3
+    },
+    {
+      "tab": "bluesky",
+      "name": "Bluesky search (needs app password)",
+      "platform": "bluesky",
+      "query": "nlp",
+      "limit": 3,
+      "requires": "bluesky"
+    },
+    {
+      "tab": "reddit",
+      "name": "Reddit search (needs Reddit key)",
+      "platform": "reddit",
+      "query": "text mining",
+      "limit": 3,
+      "requires": "reddit"
+    }
   ],
   "rejected": [
-    {"name": "Instagram profile (needs login)", "input": "https://www.instagram.com/nasa/"},
-    {"name": "Instagram story (needs login)", "input": "https://www.instagram.com/stories/nasa/123/"},
-    {"name": "Vimeo (copy-protected)", "input": "https://vimeo.com/76979871"},
-    {"name": "Kick (live streams)", "input": "https://kick.com/xqc"},
-    {"name": "X/Twitter (paid API)", "input": "https://x.com/someone/status/1"},
-    {"name": "Snapchat", "input": "https://www.snapchat.com/add/someone"},
-    {"name": "Unsupported site", "input": "https://example.com/page"}
+    {
+      "name": "Instagram profile (needs login)",
+      "input": "https://www.instagram.com/nasa/"
+    },
+    {
+      "name": "Instagram story (needs login)",
+      "input": "https://www.instagram.com/stories/nasa/123/"
+    },
+    {
+      "name": "Vimeo (copy-protected)",
+      "input": "https://vimeo.com/76979871"
+    },
+    {
+      "name": "Kick (live streams)",
+      "input": "https://kick.com/xqc"
+    },
+    {
+      "name": "X/Twitter (paid API)",
+      "input": "https://x.com/someone/status/1"
+    },
+    {
+      "name": "Snapchat",
+      "input": "https://www.snapchat.com/add/someone"
+    },
+    {
+      "name": "Unsupported site",
+      "input": "https://example.com/page"
+    }
   ]
 }

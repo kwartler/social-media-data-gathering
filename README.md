@@ -338,6 +338,8 @@ python scripts/smoke_test.py
 - `--model` also sends three videos through the model (needs `OPENROUTER_API_KEY`; a few cents).
 - `--only tiktok` tests one tab.
 - Reddit and Bluesky search run only when their credentials are set as environment variables.
+- TikTok profile listing is best effort: TikTok intermittently refuses it, so a refusal is
+  reported as a warning, not a failure. Single TikTok videos are tested normally.
 
 Each run uses a throwaway settings folder, so it never touches your real settings. The example
 links are also handy for trying each tab by hand. Posts get deleted over time; replace any
