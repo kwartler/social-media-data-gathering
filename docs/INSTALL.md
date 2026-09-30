@@ -12,6 +12,7 @@ is installed system-wide, and you can delete it like any other file.
 - [Windows](#windows)
 - [After it opens](#after-it-opens)
 - [Troubleshooting](#troubleshooting)
+- [Removing the app when you're done](#removing-the-app-when-youre-done)
 
 ---
 
@@ -49,20 +50,35 @@ Privacy & Security.
 
 From now on, the app opens with a normal double-click.
 
-### Alternative: one Terminal command
+### Alternative: open it from Terminal
 
-If you're comfortable with Terminal (Applications > Utilities > Terminal), this removes the
-block in one step. Paste it, press Return, then double-click the app normally:
+If you're comfortable with Terminal (Applications > Utilities > Terminal), you can skip
+System Settings. Paste each command and press Return. No admin password is needed.
+
+First, remove the "downloaded from the internet" flag that triggers the warning (once per
+download):
 
 ```
 xattr -dr com.apple.quarantine ~/Downloads/social-media-data-gathering.app
 ```
 
-If you moved the app to Applications, use this instead:
+Then open the app (the same as double-clicking it):
+
+```
+open ~/Downloads/social-media-data-gathering.app
+```
+
+If you moved the app to Applications, use these instead:
 
 ```
 xattr -dr com.apple.quarantine /Applications/social-media-data-gathering.app
 ```
+
+```
+open /Applications/social-media-data-gathering.app
+```
+
+After the first command, double-clicking the app works normally too.
 
 This command is also the fix if macOS ever says the app **"is damaged and can't be opened."**
 The app isn't damaged; that's another form of the same warning.
@@ -141,7 +157,7 @@ The app isn't running. Open it again and wait a few seconds for the black window
 The app is already running in another window. Use that one, or click **Quit** and reopen.
 
 **Mac: "Open Anyway" never appears in Privacy & Security.**
-Use the [Terminal command](#alternative-one-terminal-command) instead.
+Use the [Terminal commands](#alternative-open-it-from-terminal) instead.
 
 **Mac: the app opens, then immediately closes.**
 Make sure you unzipped it first; don't run it from inside the zip preview. Then try the
@@ -151,3 +167,65 @@ Terminal command above.
 Check **Protection history** in Windows Security (see above); antivirus may have blocked it.
 
 **Anything else:** note what you clicked and the exact message, and ask your instructor.
+
+---
+
+## Removing the app when you're done
+
+Removing the app takes two parts: the app itself, and the folder where it keeps your
+settings, API keys, collected data, and log.
+
+**Before you delete anything:** the data folder holds your exports, including any
+`identifiable` folders and `corpus_identified.csv` files with real names. Your IRB protocol
+or course policy may say how long to keep research data and how to destroy it. Copy
+anything you must keep to its approved location first; then delete the rest.
+
+### Mac
+
+1. **Quit the app** (Quit button on its page, or close its Terminal window).
+2. **Delete the app:** drag `social-media-data-gathering.app` (in Downloads or Applications)
+   to the Trash. Also delete the downloaded `.zip` if it's still in Downloads.
+3. **Delete the data folder.** It's hidden, so either:
+   - In Finder, press **Command + Shift + G**, type `~/.social_media_data_gathering`, press
+     Return, go up one level, and drag the `.social_media_data_gathering` folder to the
+     Trash; or
+   - Run this in Terminal (it permanently deletes the folder and everything in it):
+     ```
+     rm -rf ~/.social_media_data_gathering
+     ```
+4. **Empty the Trash** (right-click the Trash icon > Empty Trash) so the files are actually
+   removed.
+
+### Windows
+
+1. **Quit the app** (Quit button on its page, or close its console window).
+2. **Delete the app:** delete `social-media-data-gathering-windows.exe` from wherever you
+   saved it (usually Downloads).
+3. **Delete the data folder:** press **Windows key + R**, type
+   `%USERPROFILE%\.social_media_data_gathering`, and press Enter. In the File Explorer
+   window that opens, go up one level and delete the `.social_media_data_gathering` folder.
+   Or run this in PowerShell (it permanently deletes the folder and everything in it):
+   ```
+   Remove-Item -Recurse -Force "$env:USERPROFILE\.social_media_data_gathering"
+   ```
+4. **Empty the Recycle Bin** so the files are actually removed.
+
+### Also clean up
+
+- **Exports you moved elsewhere:** zip files and `_identified` folders you copied out of the
+  app's folder aren't removed by the steps above. Delete them according to your protocol.
+- **R model cache:** if you ran `examples/starter_analysis.R`, it downloaded a language model
+  for parsing. Remove it by running this in R:
+  ```
+  unlink(tools::R_user_dir("smdg", "cache"), recursive = TRUE)
+  ```
+- **Revoke your keys**, so they can't be used if a copy survives somewhere:
+  - **OpenRouter:** sign in at [openrouter.ai](https://openrouter.ai), open **Keys**, and
+    delete the key you used for class.
+  - **Reddit:** at <https://www.reddit.com/prefs/apps>, click **delete app** on the app you
+    created.
+  - **Bluesky:** in Bluesky, go to **Settings > Privacy and security > App passwords** and
+    delete the app password you created.
+- **Mac only:** the "Open Anyway" approval you gave in Privacy & Security goes away on its own
+  once the app is deleted. Nothing to undo.
+

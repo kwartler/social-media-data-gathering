@@ -290,6 +290,9 @@ Everything lives in `~/.social_media_data_gathering/`:
 - `config.json`: your keys and the pseudonymization salt. Keep the salt if you want pseudonyms
   to stay the same across collections.
 
+To uninstall, including deleting this folder and revoking your keys, see
+[Removing the app when you're done](docs/INSTALL.md#removing-the-app-when-youre-done).
+
 ## Troubleshooting
 
 **"This post needs a login"**: the post is private, age-restricted, or the platform is
