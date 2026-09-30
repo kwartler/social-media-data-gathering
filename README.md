@@ -315,13 +315,33 @@ content. Try a different model in Settings; the error is recorded in `llm_error`
 
 ## Tests
 
+**Offline tests** (fast, no internet):
+
 ```bash
 pip install -r requirements-dev.txt
 pytest
 ```
 
-The offline tests cover link recognition, caption parsing, pseudonymization, and that every
+They cover link recognition, caption parsing, pseudonymization, translation, and that every
 platform's documents validate against the JSON schema.
+
+**Live smoke test** (real posts, about 3 minutes): feeds the example links in
+[`tests/smoke_urls.json`](tests/smoke_urls.json) to the app the same way the input boxes do,
+for every tab, and checks the results.
+
+```bash
+python scripts/smoke_test.py
+```
+
+- `--app path/to/social-media-data-gathering.app` (or the `.exe`) tests a downloaded build
+  instead of the source code. **Run this on a new release before sharing it.**
+- `--model` also sends three videos through the model (needs `OPENROUTER_API_KEY`; a few cents).
+- `--only tiktok` tests one tab.
+- Reddit and Bluesky search run only when their credentials are set as environment variables.
+
+Each run uses a throwaway settings folder, so it never touches your real settings. The example
+links are also handy for trying each tab by hand. Posts get deleted over time; replace any
+link that starts failing with a similar public post.
 
 ## Build your own binary
 
