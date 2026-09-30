@@ -20,7 +20,7 @@ from fastapi.responses import FileResponse, JSONResponse, StreamingResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
-from smdg import classify, config, llm, pipeline, ytdlp_sites
+from smdg import classify, config, errors, llm, pipeline, ytdlp_sites
 
 
 # ---------------------------------------------------------------------------
@@ -80,7 +80,8 @@ def _ndjson(gen):
             for obj in gen:
                 yield json.dumps(obj, ensure_ascii=False, default=str) + "\n"
         except Exception as e:
-            yield json.dumps({"event": "error", "error": str(e)}) + "\n"
+            msg = str(e) if isinstance(e, (ValueError, PermissionError, LookupError, RuntimeError)) else errors.friendly(e)
+            yield json.dumps({"event": "error", "error": msg}) + "\n"
     return StreamingResponse(wrapped(), media_type="application/x-ndjson")
 
 

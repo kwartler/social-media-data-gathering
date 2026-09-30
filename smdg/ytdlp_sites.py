@@ -10,6 +10,7 @@ from __future__ import annotations
 
 import json
 import shutil
+import time
 from pathlib import Path
 from typing import Iterator
 
@@ -275,8 +276,22 @@ def list_account(target: dict, limit: int) -> Iterator[dict]:
     if target["platform"] == "youtube" and not url.rstrip("/").endswith(("/videos", "/shorts")):
         url = url.rstrip("/") + "/videos"
     opts = _opts(extract_flat="in_playlist", playlistend=limit)
-    with yt_dlp.YoutubeDL(opts) as ydl:
-        info = ydl.extract_info(url, download=False)
+    # TikTok often answers automated profile requests with an empty reply; retry before giving up
+    attempts = 3 if target["platform"] == "tiktok" else 1
+    for attempt in range(attempts):
+        try:
+            with yt_dlp.YoutubeDL(opts) as ydl:
+                info = ydl.extract_info(url, download=False)
+            break
+        except yt_dlp.utils.DownloadError as e:
+            if attempt + 1 < attempts:
+                time.sleep(3 * (attempt + 1))
+                continue
+            if target["platform"] == "tiktok":
+                raise RuntimeError("TikTok did not return this profile. It sometimes blocks automated requests, "
+                                   "even for valid accounts. Wait a minute and try again, or paste individual "
+                                   "video links instead.") from e
+            raise
     for e in (info.get("entries") or [])[:limit]:
         if e:
             yield _list_item(target["platform"], e)

@@ -163,3 +163,23 @@ def test_recovers_when_hidden_folder_is_deleted_while_running():
     shutil.rmtree(config.HOME_DIR)
     zp = pipeline.export("job", [], [], {}, {}, {"job_id": "job"}, {"pseudonymize": "none"})
     assert zp.exists()
+
+
+def test_tiktok_listing_retries_then_explains(monkeypatch):
+    import yt_dlp
+    from smdg import ytdlp_sites
+    calls = []
+
+    class Failing:
+        def __init__(self, opts): pass
+        def __enter__(self): return self
+        def __exit__(self, *a): return False
+        def extract_info(self, url, download=False):
+            calls.append(url)
+            raise yt_dlp.utils.DownloadError("Failed to parse JSON")
+
+    monkeypatch.setattr(yt_dlp, "YoutubeDL", Failing)
+    monkeypatch.setattr(ytdlp_sites.time, "sleep", lambda s: None)
+    with pytest.raises(RuntimeError, match="blocks automated requests"):
+        list(ytdlp_sites.list_account({"platform": "tiktok", "url": "https://www.tiktok.com/@someone"}, 5))
+    assert len(calls) == 3
