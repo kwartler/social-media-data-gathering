@@ -135,8 +135,9 @@ def collect(target: dict, opts: dict) -> dict:
         out.mkdir(parents=True, exist_ok=True)
         if media_type == "video":
             import yt_dlp
-            from .ytdlp_sites import _opts
-            with yt_dlp.YoutubeDL(_opts(skip_download=False, outtmpl=str(out / "video.%(ext)s"), merge_output_format="mp4")) as ydl:
+            from .ytdlp_sites import _opts, media_quality, video_format_opts
+            with yt_dlp.YoutubeDL(_opts(skip_download=False, outtmpl=str(out / "video.%(ext)s"),
+                                        **video_format_opts(media_quality(opts)))) as ydl:
                 ydl.download([urls[0]])
             files = sorted(out.glob("video.*"))
             return ("video", files[:1]) if files else None

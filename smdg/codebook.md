@@ -10,6 +10,7 @@ Produced by social-media-data-gathering. Read this before analysis.
 | `document.schema.json` | The JSON Schema for a `corpus.jsonl` line: field names, types, and allowed values. |
 | `corpus.csv` + `segments.csv` | The same data flattened for spreadsheets: documents in one file, transcript segments in the other (join on `doc_id`). |
 | `timedtext/` | YouTube only: the raw caption files exactly as YouTube's timedtext API returned them (json3), as in yt-timed-text. |
+| Kept videos and images | Only if "Keep a copy" was on. Not inside the zip: they're in a folder next to it (or where you chose), `social_media_corpus_<date>_<id>_media`, one file per post named by `doc_id` (for example `tiktok_post_123.mp4`, or `_01.jpg`, `_02.jpg` for image posts). `manifest.json` lists the folder and each post's files. They show real people: store them per your protocol. |
 | `manifest.json` | Provenance: every input, its status and error, the options used, the exact model prompt and version, and the model cost. |
 | `identifiable/` | Included by default. `linking_key.csv` maps each document to its real author and URL; `pseudonym_key.csv` maps every code (authors and @mentions) to the original name; `raw/` holds the full platform responses. `examples/restore_identities.R` uses these to put names back. **Store this folder separately from the analysis data and delete it when your protocol says to.** |
 

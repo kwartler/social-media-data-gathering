@@ -182,7 +182,7 @@ Collection options:
 | Translate to | off | Adds `translated_*` fields in this language for the title, text, transcripts, and on-screen text of every post and comment. Originals are never replaced. |
 | Pseudonymize | YouTube: commenters only. Other tabs: everyone | Replaces names and @mentions with stable codes such as `u_3f9a1c02de`. **Commenters and @mentions only** keeps the accounts you chose to study (for example a news channel) and codes everyone else. **Everyone** codes post authors too. **No one** turns it off. |
 | Include identifiable folder | on (off with "No one") | Adds the keys that map codes back to real names and links, plus raw platform data, in a separate `identifiable/` folder. With Pseudonymize set to "No one" there is no key, so this unchecks itself and becomes "Include raw platform data"; tick it to keep the raw data. |
-| Keep downloaded media | off | Leaves the downloaded videos and images on disk instead of deleting them. |
+| Keep a copy of videos and images | off | Saves each post's video (or images) for the student. Checking it opens a dialog to choose **360p** (default) or **720p** and a save location (your Downloads folder by default, or **Choose folder...**). Each collection gets its own folder, `social_media_corpus_<date>_<id>_media`, with files named by `doc_id` to match the corpus. Works with the model on or off; the model always gets its own small copy. |
 
 ## What's in the zip
 
@@ -293,7 +293,8 @@ The app doesn't keep its own copy of your zips. It has one hidden folder,
   to stay the same across collections.
 - `collection_log.jsonl`: the collection log shown on the Log tab.
 - `cache/`: model results, so re-running the same media with the same model is free.
-- `media/`: temporary video and image downloads (emptied after extraction unless you keep media).
+- `media/`: temporary video and image downloads, deleted as soon as each post is processed.
+  Copies you choose to keep go to the folder you picked, never here.
 - `exports/`: holds each zip only until your browser has downloaded it; emptied every time
   the app starts.
 

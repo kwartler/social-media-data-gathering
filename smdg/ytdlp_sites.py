@@ -142,26 +142,49 @@ def collect(target: dict, opts: dict) -> dict:
         ext = "json" if cap_raw["ext"] == "json3" else cap_raw["ext"]  # json3 keeps yt-timed-text's .json name
         timedtext[f"{post_id}_{cap_raw['lang']}.{ext}"] = cap_raw["data"]
 
-    # YouTube: timedtext captions by default (as in yt-timed-text); the model only if chosen
-    if platform == "youtube" and yt_source == "captions":
-        return {"rows": rows, "segments": segments, "raw": raw, "timedtext": timedtext, "fetch_media": None}
-
     duration = main.get("duration")
     max_secs = int(opts.get("max_media_seconds") or 300)
 
     def fetch_media() -> tuple[str, list[Path]] | None:
         if duration and duration > max_secs:
-            raise RuntimeError(f"Video is {int(duration)}s, longer than the {max_secs}s limit set for model extraction.")
-        return download_media(target["url"], info, entries, post_id, platform)
+            raise RuntimeError(too_long_message(duration, max_secs))
+        return download_media(target["url"], info, entries, post_id, platform, media_quality(opts))
 
-    return {"rows": rows, "segments": segments, "raw": raw, "timedtext": timedtext, "fetch_media": fetch_media}
+    # YouTube: timedtext captions by default (as in yt-timed-text). The video is still
+    # downloadable so a student can keep a copy, but it only goes to the model if chosen.
+    model_media = not (platform == "youtube" and yt_source == "captions")
+    return {"rows": rows, "segments": segments, "raw": raw, "timedtext": timedtext,
+            "fetch_media": fetch_media, "model_media": model_media}
 
 
 SHRINK_ABOVE = 40 * 1024 * 1024
+QUALITIES = (360, 720)
+
+
+def media_quality(opts: dict) -> int:
+    """360p unless the student chose to keep 720p copies. The model gets a small copy either way."""
+    if not opts.get("keep_media"):
+        return 360
+    try:
+        q = int(opts.get("media_quality") or 360)
+    except (TypeError, ValueError):
+        return 360
+    return q if q in QUALITIES else 360
+
+
+def video_format_opts(quality: int) -> dict:
+    """yt-dlp options for the smallest copy near the chosen height, merged to mp4."""
+    return {"format": "bv*+ba/b", "format_sort": [f"res:{quality}", "+size", "+br"], "merge_output_format": "mp4"}
+
+
+def too_long_message(duration, max_secs: int) -> str:
+    return (f"Video is {int(duration)}s, longer than the {max_secs}s maximum video length set in "
+            "Collection options, so it was not downloaded.")
 
 
 def shrink_video(path: Path) -> Path:
-    """Re-encode a large video to 360p so it fits the model's upload limit. Returns the new path."""
+    """Make a 360p copy of a large video so it fits the model's upload limit. Returns the
+    path to send; the original is left in place (the student may be keeping it)."""
     import subprocess
     if path.stat().st_size <= SHRINK_ABOVE:
         return path
@@ -176,7 +199,6 @@ def shrink_video(path: Path) -> Path:
         subprocess.run(cmd, check=True, timeout=1800)
     except Exception:
         return path
-    path.unlink(missing_ok=True)
     return out
 
 
@@ -227,8 +249,9 @@ def _platform_captions(ydl, info: dict, lang: str):
     return [], "none", None
 
 
-def download_media(url: str, info: dict, entries, post_id: str, platform: str) -> tuple[str, list[Path]] | None:
-    """Download a low-resolution copy for the model. Videos win over images."""
+def download_media(url: str, info: dict, entries, post_id: str, platform: str,
+                   quality: int = 360) -> tuple[str, list[Path]] | None:
+    """Download a copy near the given height (360p by default). Videos win over images."""
     out_dir = config.MEDIA_DIR / f"{platform}_{post_id}"
     out_dir.mkdir(parents=True, exist_ok=True)
     items = entries or [info]
@@ -238,10 +261,7 @@ def download_media(url: str, info: dict, entries, post_id: str, platform: str) -
         opts = _opts(
             **(_impersonate() if platform == "other" else {}),
             skip_download=False,
-            # Smallest copy near 360p: plenty for the model, and keeps files under the upload limit
-            format="bv*+ba/b",
-            format_sort=["res:360", "+size", "+br"],
-            merge_output_format="mp4",
+            **video_format_opts(quality),
             outtmpl=str(out_dir / "%(id)s.%(ext)s"),
             noplaylist=False,
             playlist_items="1",

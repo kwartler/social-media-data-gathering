@@ -113,7 +113,8 @@ def collect(target: dict, opts: dict) -> dict:
         if videos:
             dur = ((videos[0].get("meta") or {}).get("original") or {}).get("duration")
             if dur and dur > max_secs:
-                raise RuntimeError(f"Video is {int(dur)}s, longer than the {max_secs}s limit set for model extraction.")
+                from .ytdlp_sites import too_long_message
+                raise RuntimeError(too_long_message(dur, max_secs))
             p = out / "video.mp4"
             p.write_bytes(_get(videos[0]["url"], raw=True).content)
             return "video", [p]

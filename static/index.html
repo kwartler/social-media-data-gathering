@@ -142,8 +142,11 @@
             </div>
             <label class="check"><input type="checkbox" id="optIdent" checked>
               <span id="optIdentText">Include identifiable folder (linking key, raw data)</span></label>
-            <label class="check" id="optKeepWrap"><input type="checkbox" id="optKeep">
-              <span>Keep downloaded media files</span></label>
+            <div id="optKeepWrap">
+              <label class="check"><input type="checkbox" id="optKeep">
+                <span>Keep a copy of videos and images</span></label>
+              <span class="hint keep-summary hidden" id="keepSummary"></span>
+            </div>
           </fieldset>
         </div>
         <div class="run-row">
@@ -173,6 +176,38 @@
       </div>
     </section>
   </main>
+
+  <!-- Keep-a-copy dialog -->
+  <dialog id="mediaDlg">
+    <form method="dialog" id="mediaForm">
+      <h2>Keep a copy of videos and images</h2>
+      <p class="muted small">Each post's video (or images) is saved next to your corpus, named by its
+        <code>doc_id</code> so it matches the data. Off by default; the model gets its own small copy either way.</p>
+
+      <h3>Video quality</h3>
+      <label class="check"><input type="radio" name="mediaQuality" value="360" checked>
+        <span>360p <span class="hint">Smaller files. Fine for viewing and checking the model's work.</span></span></label>
+      <label class="check"><input type="radio" name="mediaQuality" value="720">
+        <span>720p <span class="hint">Sharper, roughly 3 times larger. Use when small on-screen text matters.</span></span></label>
+
+      <h3>Save location</h3>
+      <div class="row tight folder-row">
+        <input type="text" id="mediaFolder" autocomplete="off" spellcheck="false">
+        <button type="button" id="chooseFolderBtn">Choose folder...</button>
+      </div>
+      <span class="hint">Each collection gets its own new folder inside this one, named like its corpus zip.</span>
+      <p class="muted small warn-text">Videos show real people. Store them as your IRB protocol requires, and avoid folders that sync
+        to the cloud (iCloud Drive, OneDrive, Dropbox, Google Drive, and often Desktop and Documents).</p>
+
+      <div class="row between">
+        <span id="mediaDlgStatus" class="muted small"></span>
+        <div>
+          <button type="button" id="mediaCancel">Cancel</button>
+          <button type="button" id="mediaSave" class="primary">Keep copies</button>
+        </div>
+      </div>
+    </form>
+  </dialog>
 
   <!-- Settings dialog -->
   <dialog id="settingsDlg">

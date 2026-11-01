@@ -141,6 +141,63 @@ def youtube_languages(url: str):
         raise HTTPException(500, f"Failed to list languages: {e}")
 
 
+class FolderBody(BaseModel):
+    path: str = ""
+
+
+@app.post("/api/check-folder")
+def check_folder(body: FolderBody):
+    try:
+        return {"ok": True, "path": str(config.check_folder(body.path))}
+    except ValueError as e:
+        return {"ok": False, "error": str(e)}
+
+
+@app.post("/api/choose-folder")
+def choose_folder():
+    """Open the operating system's folder picker (the app runs on the student's own computer)."""
+    import subprocess
+    prompt = "Choose where to save copies of videos and images"
+    try:
+        if sys.platform == "darwin":
+            r = subprocess.run(["osascript", "-e", "tell me to activate",
+                                "-e", f'POSIX path of (choose folder with prompt "{prompt}")'],
+                               capture_output=True, text=True, timeout=900)
+            if r.returncode != 0:
+                return {"cancelled": True}
+            return {"path": r.stdout.strip().rstrip("/") or "/"}
+        if sys.platform == "win32":
+            ps = ("Add-Type -AssemblyName System.Windows.Forms;"
+                  "$f = New-Object System.Windows.Forms.FolderBrowserDialog;"
+                  f"$f.Description = '{prompt}'; $f.ShowNewFolderButton = $true;"
+                  "$owner = New-Object System.Windows.Forms.Form -Property @{TopMost = $true};"
+                  "if ($f.ShowDialog($owner) -eq 'OK') { $f.SelectedPath }")
+            r = subprocess.run(["powershell", "-NoProfile", "-STA", "-Command", ps],
+                               capture_output=True, text=True, timeout=900,
+                               creationflags=getattr(subprocess, "CREATE_NO_WINDOW", 0))
+            path = r.stdout.strip()
+            return {"path": path} if path else {"cancelled": True}
+    except Exception as e:
+        return {"error": f"Could not open the folder picker: {e}. Type the folder path instead."}
+    return {"error": "No folder picker on this system. Type the folder path instead."}
+
+
+@app.post("/api/open-folder")
+def open_folder(body: FolderBody):
+    """Show a kept-copies folder in Finder or File Explorer (only folders this app created)."""
+    import subprocess
+    p = Path(body.path).expanduser()
+    if not (p.is_dir() and p.name.startswith("social_media_corpus_") and p.name.endswith("_media")):
+        raise HTTPException(400, "Not a folder of kept copies.")
+    if sys.platform == "darwin":
+        subprocess.Popen(["open", str(p)])
+    elif sys.platform == "win32":
+        os.startfile(str(p))  # noqa: S606 (a folder this app created)
+    else:
+        subprocess.Popen(["xdg-open", str(p)])
+    return {"ok": True}
+
+
 @app.get("/api/models")
 def models():
     try:

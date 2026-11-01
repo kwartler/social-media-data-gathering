@@ -39,7 +39,9 @@ DEFAULT_OPTS = {
     "max_media_seconds": 300,
     "pseudonymize": "everyone",  # everyone, commenters, or none
     "include_identifiable": True,
-    "keep_media": False,
+    "keep_media": False,          # save a copy of videos and images for the student
+    "media_quality": 360,         # 360 or 720 for kept copies; the model always gets a small copy
+    "media_folder": "",           # where kept copies go; empty means the Downloads folder
     "youtube_source": "captions",  # captions (timedtext), model, or both
     "translate_to": "",            # e.g. "English"; empty means no translation
 }
@@ -78,34 +80,73 @@ def _model(opts: dict) -> str:
     return opts.get("model") if opts.get("model") in allowed else config.model()
 
 
-def _apply_llm(result: dict, opts: dict) -> dict:
-    """Fill model-extracted columns on the post row. Returns usage info for the manifest."""
+def media_destination(opts: dict, job_id: str) -> Path | None:
+    """Folder for kept copies: <chosen folder or Downloads>/social_media_corpus_<job>_media."""
+    if not opts.get("keep_media"):
+        return None
+    base = Path(opts.get("media_folder") or "").expanduser() if opts.get("media_folder") else config.downloads_dir()
+    return base / f"social_media_corpus_{job_id}_media"
+
+
+def _save_copies(files: list[Path], kind: str, doc_id: str, dest: Path) -> list[str]:
+    """Copy downloaded media into the student's folder, named after the document."""
+    dest.mkdir(parents=True, exist_ok=True)
+    saved = []
+    for i, f in enumerate(files):
+        name = f"{doc_id}{f.suffix.lower()}" if kind == "video" and len(files) == 1 \
+            else f"{doc_id}_{i + 1:02d}{f.suffix.lower()}"
+        shutil.copy2(f, dest / name)
+        saved.append(name)
+    return saved
+
+
+def _apply_media(result: dict, opts: dict, dest: Path | None) -> tuple[dict, list[str], str]:
+    """Download a post's video or images once; keep a copy and/or send one to the model.
+
+    Returns (model usage for the manifest, names of kept files, error keeping a copy).
+    """
     post = result["rows"][0]
     fetch = result.get("fetch_media")
-    if not opts.get("llm") or not fetch:
-        return {}
+    want_model = bool(opts.get("llm")) and result.get("model_media", True)
+    want_copy = dest is not None
+    if not fetch or not (want_model or want_copy):
+        return {}, [], ""
     model = _model(opts)
-    if not config.get("openrouter_api_key"):
+    if want_model and not config.get("openrouter_api_key"):
         post["llm_error"] = "No OpenRouter API key set, so model extraction was skipped. Add one in Settings."
-        return {}
-    post["llm_model"] = model
-    media_dir = None
+        want_model = False
+        if not want_copy:
+            return {}, [], ""
+    if want_model:
+        post["llm_model"] = model
+
+    media_dir, saved, copy_error = None, [], ""
     try:
         got = fetch()
         if not got:
-            post["llm_error"] = "No downloadable media found in this post."
-            return {}
+            msg = "No downloadable media found in this post."
+            if want_model:
+                post["llm_error"] = msg
+            return {}, [], msg if want_copy else ""
         kind, files = got
         media_dir = files[0].parent if files else None
-        if kind == "video":
-            files = [ytdlp_sites.shrink_video(f) for f in files]
-        out = llm.extract(files, kind, model)
+        if want_copy:
+            try:
+                saved = _save_copies(files, kind, post["doc_id"], dest)
+            except OSError as e:
+                copy_error = f"Could not save a copy to {dest}: {e}"
+        if not want_model:
+            return {}, saved, copy_error
+        send = [ytdlp_sites.shrink_video(f) for f in files] if kind == "video" else files
+        out = llm.extract(send, kind, model)
     except Exception as e:
-        post["llm_error"] = errors.friendly(e) if not isinstance(e, llm.LLMError) else str(e)
-        return {}
+        msg = str(e) if isinstance(e, llm.LLMError) else errors.friendly(e)
+        if want_model:
+            post["llm_error"] = msg
+        return {}, saved, copy_error or (msg if want_copy and not saved else "")
     finally:
-        if media_dir and not opts.get("keep_media"):
-            shutil.rmtree(media_dir, ignore_errors=True)
+        if media_dir:
+            shutil.rmtree(media_dir, ignore_errors=True)  # the temporary download; kept copies live in dest
 
     segs = [sg for sg in out.get("transcript_segments") or [] if isinstance(sg, dict) and sg.get("text")]
     post["llm_transcript"] = "\n".join(f"{sg.get('speaker') or '?'}: {sg['text']}" for sg in segs)
@@ -125,8 +166,9 @@ def _apply_llm(result: dict, opts: dict) -> dict:
         result["segments"].append({"doc_id": post["doc_id"], "source": "llm", "speaker": sg.get("speaker") or "?",
                                    "start_seconds": sg.get("start_seconds"), "end_seconds": "", "text": sg["text"]})
     usage = out.get("_usage") or {}
-    return {"cached": bool(out.get("_cached")), "cost": usage.get("cost"),
-            "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")}
+    return ({"cached": bool(out.get("_cached")), "cost": usage.get("cost"),
+             "prompt_tokens": usage.get("prompt_tokens"), "completion_tokens": usage.get("completion_tokens")},
+            saved, copy_error)
 
 
 def _apply_translation(result: dict, opts: dict) -> dict:
@@ -185,6 +227,14 @@ def run(inputs: list[str], opts: dict) -> Iterator[dict]:
     job_id = time.strftime("%Y%m%d_%H%M%S_") + uuid.uuid4().hex[:6]
     started = now_iso()
     all_rows, all_segments, raws, timedtext, items = [], [], {}, {}, []
+    dest = media_destination(opts, job_id)
+    n_saved = 0
+    if dest is not None:
+        try:
+            config.check_folder(opts.get("media_folder") or "")
+        except ValueError as e:
+            yield {"event": "error", "error": f"Keep a copy: {e}"}
+            return
     yield {"event": "start", "job_id": job_id, "total": len(inputs)}
 
     last_platform = None
@@ -200,7 +250,8 @@ def run(inputs: list[str], opts: dict) -> Iterator[dict]:
             last_platform = target["platform"]
             target["input"] = raw_input
             result = COLLECTORS[target["platform"]](target, opts)
-            usage = _apply_llm(result, opts)
+            usage, saved, copy_error = _apply_media(result, opts, dest)
+            n_saved += len(saved)
             tr_usage = _apply_translation(result, opts)
             if tr_usage:
                 usage = {**usage, "translation_cost": tr_usage.get("cost"),
@@ -211,10 +262,12 @@ def run(inputs: list[str], opts: dict) -> Iterator[dict]:
             raws[post["doc_id"]] = result["raw"]
             timedtext.update(result.get("timedtext") or {})
             entry.update(ok=True, doc_id=post["doc_id"], n_docs=len(result["rows"]),
-                         llm_error=post["llm_error"] or None, llm_usage=usage or None)
+                         llm_error=post["llm_error"] or None, llm_usage=usage or None,
+                         media_files=saved or None, media_error=copy_error or None)
             preview = post["title"] or post["text"] or post["caption_transcript"] or post["llm_transcript"] or post["visual_description"]
             yield {"event": "item", "i": i, "input": raw_input, "ok": True, "platform": target["platform"],
                    "n_docs": len(result["rows"]), "llm_error": post["llm_error"],
+                   "media_saved": len(saved), "media_error": copy_error,
                    "preview": preview[:240], "cost": (usage or {}).get("cost")}
         except Exception as e:
             msg = str(e) if isinstance(e, (ValueError, PermissionError, LookupError)) else errors.friendly(e)
@@ -234,12 +287,15 @@ def run(inputs: list[str], opts: dict) -> Iterator[dict]:
         "llm_prompt": llm.prompt_record() if opts.get("llm") else None,
         "items": items,
         "n_documents": len(all_rows),
+        "media_folder": str(dest) if n_saved else None,
+        "media_files_saved": n_saved,
         "total_llm_cost_usd": round(sum((it.get("llm_usage") or {}).get("cost") or 0 for it in items), 6),
     }
     zip_path = export(job_id, all_rows, all_segments, raws, timedtext, manifest, opts)
     yield {"event": "done", "job_id": job_id, "n_docs": len(all_rows),
            "ok": sum(1 for it in items if it.get("ok")), "failed": sum(1 for it in items if not it.get("ok")),
-           "cost": manifest["total_llm_cost_usd"], "zip": zip_path.name}
+           "cost": manifest["total_llm_cost_usd"], "zip": zip_path.name,
+           "media_saved": n_saved, "media_folder": str(dest) if n_saved else ""}
 
 
 INT_COLUMNS = {"like_count", "reply_count", "share_count", "view_count"}

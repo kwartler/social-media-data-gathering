@@ -256,7 +256,7 @@ function updateModelOptions() {
   const on = usesModel();
   const translating = !!$("#optTranslate").value.trim();
   show($("#optMaxWrap"), on);
-  show($("#optKeepWrap"), on);
+
   show($("#optModelWrap"), on || translating);
   show($("#optLangWrap"), PLATFORMS[active]?.captions && !(active === "youtube" && $("#optYtSource").value === "model"));
   updateBanner();
@@ -503,7 +503,9 @@ function options() {
     caption_lang: $("#optLang").value || "en",
     pseudonymize: $("#optPseudo").value,
     include_identifiable: $("#optIdent").checked,
-    keep_media: usesModel() && $("#optKeep").checked,
+    keep_media: $("#optKeep").checked,
+    media_quality: mediaPrefs.quality,
+    media_folder: mediaPrefs.folder,
     model: $("#optModel").value || settings.model,
   };
 }
@@ -527,12 +529,15 @@ $("#runBtn").addEventListener("click", async () => {
         $("#progTitle").textContent = `Collecting ${done} of ${inputs.length}...`;
         const tr = document.createElement("tr");
         let result;
+        const mediaNote = ev.media_error ? `<div class="warn">Copy: ${escapeHtml(ev.media_error)}</div>`
+          : (ev.media_saved ? `<div class="muted small">Kept ${ev.media_saved} file${ev.media_saved === 1 ? "" : "s"}</div>` : "");
         if (!ev.ok) result = `<span class="err">${escapeHtml(ev.error)}</span>`;
         else {
           result = `${ev.n_docs} doc${ev.n_docs === 1 ? "" : "s"}`
             + (ev.cost ? ` <span class="muted">($${ev.cost.toFixed(4)})</span>` : "")
             + (ev.preview ? `<div class="preview">${escapeHtml(ev.preview)}</div>` : "")
-            + (ev.llm_error ? `<div class="warn">Model: ${escapeHtml(ev.llm_error)}</div>` : "");
+            + (ev.llm_error ? `<div class="warn">Model: ${escapeHtml(ev.llm_error)}</div>` : "")
+            + mediaNote;
         }
         tr.innerHTML = `<td>${ev.i + 1}</td><td class="input-cell">${escapeHtml(ev.input)}</td><td>${result}</td>`;
         $("#progBody").appendChild(tr);
@@ -548,6 +553,7 @@ $("#runBtn").addEventListener("click", async () => {
           a.click();
           setStatus(`Saved ${ev.zip} to your Downloads folder.`);
         }
+        showMediaResult(ev);
       } else if (ev.event === "error") {
         setStatus(ev.error, true);
       }
@@ -558,6 +564,101 @@ $("#runBtn").addEventListener("click", async () => {
     updateRunLabel();
   }
 });
+
+// -------- Keep a copy of videos and images --------
+// Quality and folder are remembered in this browser (a convenience only; nothing breaks without it)
+const MEDIA_PREFS_KEY = "smdg.mediaPrefs";
+let mediaPrefs = { quality: 360, folder: "" };
+try {
+  const saved = JSON.parse(localStorage.getItem(MEDIA_PREFS_KEY) || "null");
+  if (saved && [360, 720].includes(saved.quality)) mediaPrefs = { quality: saved.quality, folder: saved.folder || "" };
+} catch { /* storage unavailable: use defaults */ }
+
+function saveMediaPrefs() {
+  try { localStorage.setItem(MEDIA_PREFS_KEY, JSON.stringify(mediaPrefs)); } catch { /* ignore */ }
+}
+
+function folderLabel(path) {
+  return !path || path === settings.downloads_dir ? "your Downloads folder" : path;
+}
+
+function updateKeepSummary() {
+  const on = $("#optKeep").checked;
+  show($("#keepSummary"), on);
+  if (on) {
+    $("#keepSummary").innerHTML = `${mediaPrefs.quality}p, saved to ${escapeHtml(folderLabel(mediaPrefs.folder))}. `
+      + `<a href="#" id="keepChange">Change</a>`;
+    $("#keepChange").addEventListener("click", (e) => { e.preventDefault(); openMediaDialog(); });
+  }
+}
+
+let mediaDlgFresh = false;  // opened by checking the box (Cancel unchecks it) vs. "Change" (Cancel keeps it)
+function openMediaDialog(fresh = false) {
+  mediaDlgFresh = fresh;
+  for (const r of document.querySelectorAll('input[name="mediaQuality"]')) r.checked = +r.value === mediaPrefs.quality;
+  $("#mediaFolder").value = mediaPrefs.folder || settings.downloads_dir || "";
+  $("#mediaDlgStatus").textContent = "";
+  $("#mediaDlg").showModal();
+}
+
+$("#optKeep").addEventListener("change", () => {
+  if ($("#optKeep").checked) openMediaDialog(true);
+  updateKeepSummary();
+});
+
+function cancelMediaDialog() {
+  if (mediaDlgFresh) $("#optKeep").checked = false;
+  updateKeepSummary();
+}
+
+$("#mediaCancel").addEventListener("click", () => {
+  $("#mediaDlg").close();
+  cancelMediaDialog();
+});
+
+$("#chooseFolderBtn").addEventListener("click", async () => {
+  $("#mediaDlgStatus").textContent = "A folder window opened. It may be behind this browser window.";
+  $("#chooseFolderBtn").disabled = true;
+  try {
+    const r = await postJSON("/api/choose-folder", {});
+    if (r.path) $("#mediaFolder").value = r.path;
+    $("#mediaDlgStatus").textContent = r.error || "";
+  } catch (err) {
+    $("#mediaDlgStatus").textContent = err.message;
+  } finally {
+    $("#chooseFolderBtn").disabled = false;
+  }
+});
+
+$("#mediaSave").addEventListener("click", async () => {
+  const quality = +(document.querySelector('input[name="mediaQuality"]:checked') || {}).value || 360;
+  const r = await postJSON("/api/check-folder", { path: $("#mediaFolder").value.trim() }).catch(err => ({ ok: false, error: err.message }));
+  if (!r.ok) {
+    $("#mediaDlgStatus").textContent = r.error;
+    return;
+  }
+  mediaPrefs = { quality, folder: r.path === settings.downloads_dir ? "" : r.path };
+  saveMediaPrefs();
+  mediaDlgFresh = false;
+  $("#mediaDlg").close();
+  $("#optKeep").checked = true;
+  updateKeepSummary();
+});
+
+// Esc closes the dialog: treat it like Cancel
+$("#mediaDlg").addEventListener("cancel", cancelMediaDialog);
+
+function showMediaResult(ev) {
+  if (!ev.media_saved) return;
+  const n = ev.media_saved;
+  const status = $("#status");
+  status.innerHTML = `${escapeHtml(status.textContent)} Kept ${n} video/image file${n === 1 ? "" : "s"} in `
+    + `<code>${escapeHtml(ev.media_folder)}</code>. <a href="#" id="openMediaFolder">Show files</a>`;
+  $("#openMediaFolder").addEventListener("click", async (e) => {
+    e.preventDefault();
+    try { await postJSON("/api/open-folder", { path: ev.media_folder }); } catch (err) { setStatus(err.message, true); }
+  });
+}
 
 // -------- Log --------
 async function loadLog() {

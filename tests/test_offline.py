@@ -183,3 +183,81 @@ def test_tiktok_listing_retries_then_explains(monkeypatch):
     with pytest.raises(RuntimeError, match="blocks automated requests"):
         list(ytdlp_sites.list_account({"platform": "tiktok", "url": "https://www.tiktok.com/@someone"}, 5))
     assert len(calls) == 3
+
+
+def _fake_result(tmp_path, kind="video", n=1, model_media=True):
+    from smdg import config
+    media_dir = config.MEDIA_DIR / "fake_post"
+    media_dir.mkdir(parents=True, exist_ok=True)
+    files = []
+    for i in range(n):
+        f = media_dir / (f"clip.mp4" if kind == "video" else f"image_{i + 1:02d}.jpg")
+        f.write_bytes(b"x" * (100 + i))
+        files.append(f)
+    row = new_row("tiktok", "post", "123")
+    return {"rows": [row], "segments": [], "fetch_media": lambda: (kind, files), "model_media": model_media}, media_dir
+
+
+def test_keep_copy_without_model(tmp_path):
+    from smdg import pipeline
+    result, media_dir = _fake_result(tmp_path)
+    usage, saved, err = pipeline._apply_media(result, {"llm": False, "keep_media": True}, tmp_path / "out")
+    assert saved == ["tiktok_post_123.mp4"] and err == "" and usage == {}
+    assert (tmp_path / "out" / "tiktok_post_123.mp4").read_bytes() == b"x" * 100
+    assert not media_dir.exists()  # temporary download cleaned up
+    assert result["rows"][0]["ai_generated"] is False
+
+
+def test_keep_copy_of_images_numbers_them(tmp_path):
+    from smdg import pipeline
+    result, _ = _fake_result(tmp_path, kind="images", n=2)
+    _, saved, _ = pipeline._apply_media(result, {"llm": False, "keep_media": True}, tmp_path / "out")
+    assert saved == ["tiktok_post_123_01.jpg", "tiktok_post_123_02.jpg"]
+
+
+def test_keep_copy_and_model_together(tmp_path, monkeypatch):
+    from smdg import config, llm, pipeline
+    monkeypatch.setattr(config, "get", lambda name, default="": "key" if name == "openrouter_api_key" else default)
+    sent = {}
+
+    def fake_extract(files, kind, model):
+        sent["files"] = files
+        return {"transcript_segments": [{"speaker": "A", "start_seconds": 0, "text": "hi"}], "speakers": [],
+                "on_screen_text": [], "visual_description": "a dog", "audio_description": "", "_usage": {"cost": 0.01}}
+
+    monkeypatch.setattr(llm, "extract", fake_extract)
+    result, media_dir = _fake_result(tmp_path)
+    usage, saved, err = pipeline._apply_media(result, {"llm": True, "keep_media": True}, tmp_path / "out")
+    assert saved == ["tiktok_post_123.mp4"] and usage["cost"] == 0.01
+    assert result["rows"][0]["visual_description"] == "a dog" and result["rows"][0]["ai_generated"] is True
+    assert (tmp_path / "out" / "tiktok_post_123.mp4").exists() and not media_dir.exists()
+
+
+def test_youtube_captions_mode_keeps_copy_but_skips_model(tmp_path, monkeypatch):
+    from smdg import config, llm, pipeline
+    monkeypatch.setattr(config, "get", lambda name, default="": "key" if name == "openrouter_api_key" else default)
+    monkeypatch.setattr(llm, "extract", lambda *a: (_ for _ in ()).throw(AssertionError("model must not run")))
+    result, _ = _fake_result(tmp_path, model_media=False)
+    usage, saved, _ = pipeline._apply_media(result, {"llm": True, "keep_media": True}, tmp_path / "out")
+    assert saved and usage == {}
+
+
+def test_media_quality_defaults_and_limits():
+    from smdg.ytdlp_sites import media_quality
+    assert media_quality({}) == 360
+    assert media_quality({"keep_media": False, "media_quality": 720}) == 360  # model-only stays small
+    assert media_quality({"keep_media": True, "media_quality": 720}) == 720
+    assert media_quality({"keep_media": True, "media_quality": 4320}) == 360
+
+
+def test_unwritable_folder_stops_the_run_with_a_message(tmp_path):
+    import os
+    from smdg import pipeline
+    locked = tmp_path / "locked"
+    locked.mkdir()
+    os.chmod(locked, 0o500)
+    try:
+        events = list(pipeline.run(["https://bsky.app/profile/x/post/1"], {"keep_media": True, "media_folder": str(locked / "sub")}))
+    finally:
+        os.chmod(locked, 0o700)
+    assert events[-1]["event"] == "error" and "Keep a copy" in events[-1]["error"]

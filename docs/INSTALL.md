@@ -217,6 +217,9 @@ anything you must keep to its approved location first; then delete the rest.
 - **Your corpus zips:** files named `social_media_corpus_...zip` in Downloads (or wherever you
   moved them), plus any `_identified` folders and `review_sheet.csv` files the R scripts
   made next to them. Delete them according to your protocol.
+- **Kept videos and images:** if you used "Keep a copy", folders named
+  `social_media_corpus_..._media` in Downloads or the folder you chose. They show real people;
+  delete them according to your protocol.
 - **R model cache:** if you ran `examples/starter_analysis.R`, it downloaded a language model
   for parsing. Remove it by running this in R:
   ```

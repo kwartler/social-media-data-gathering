@@ -100,6 +100,7 @@ def public_view() -> dict:
         val = get(name)
         out[name] = bool(val) if name in SECRET_KEYS else val
     out["model"] = model()
+    out["downloads_dir"] = str(downloads_dir())
     out["data_dir"] = str(HOME_DIR)
     return out
 
@@ -108,6 +109,26 @@ def clear_temp_exports() -> None:
     """Delete zips left from earlier sessions; the browser already saved them to Downloads."""
     for f in EXPORT_DIR.glob("*.zip"):
         f.unlink(missing_ok=True)
+
+
+def downloads_dir() -> Path:
+    """The user's Downloads folder (default place for kept video and image copies)."""
+    return Path.home() / "Downloads"
+
+
+def check_folder(path: str) -> Path:
+    """Expand and validate a folder the student chose; raises ValueError with a plain message."""
+    p = Path(path.strip()).expanduser() if path and path.strip() else downloads_dir()
+    if not p.is_absolute():
+        raise ValueError("Use a full folder path, or click Choose folder.")
+    try:
+        p.mkdir(parents=True, exist_ok=True)
+        probe = p / ".smdg_write_test"
+        probe.write_text("ok")
+        probe.unlink()
+    except OSError as e:
+        raise ValueError(f"Can't save files in that folder: {e.strerror or e}")
+    return p
 
 
 def salt() -> str:
